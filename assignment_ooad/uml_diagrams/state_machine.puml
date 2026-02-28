@@ -1,0 +1,94 @@
+@startuml
+!theme plain
+skinparam stateBorderColor #F57C00
+skinparam stateBackgroundColor #FFF3E0
+
+title Machine Resource State Machine Diagram
+
+[*] --> Idle : machine initialized\nin factory setup
+
+state Idle {
+  Idle : available for requests
+  Idle : no batch being processed
+  Idle : uptime accumulating
+}
+
+Idle --> Requested : process requests\nmachine resource
+
+state Requested {
+  Requested : request granted
+  Requested : machine allocated to batch
+}
+
+Requested --> Processing : batch enters\nprocessing stage
+
+state Processing {
+  Processing : executing production task
+  Processing : batch in machine
+  Processing : busy_hr accumulating
+  Processing : duration ~ Normal(proc_mean, proc_std)
+}
+
+Processing --> Idle : processing complete\nrelease resource
+
+Processing --> BreakdownDuringOperation : random failure\nbased on MTBF
+
+state BreakdownDuringOperation {
+  BreakdownDuringOperation : failure occurred
+  BreakdownDuringOperation : breakdown event created
+  BreakdownDuringOperation : batch processing interrupted
+}
+
+Idle --> BreakdownIdle : random failure\nbased on MTBF
+
+state BreakdownIdle {
+  BreakdownIdle : failure occurred while idle
+  BreakdownIdle : machine unavailable
+}
+
+BreakdownDuringOperation --> UnderRepair
+BreakdownIdle --> UnderRepair
+
+state UnderRepair {
+  UnderRepair : repair in progress
+  UnderRepair : repair_duration ~ Exponential(MTTR)
+  UnderRepair : downtime accumulating
+  UnderRepair : repair_cost_eur = €2,500
+}
+
+UnderRepair --> Idle : repair complete\nresume operation
+
+note right of Processing
+  Machine failures follow exponential
+  distribution with MTBF (Mean Time
+  Between Failures) from config.
+  
+  Example MTBFs:
+  - Body Prep: 340h
+  - Forming: 480h  
+  - Kiln: 550h
+end note
+
+note right of UnderRepair
+  MTTR (Mean Time To Repair):
+  - Body Prep: 4.5h
+  - Forming: 3.0h
+  - Kiln: 6.0h
+  
+  Each breakdown costs €2,500
+  in maintenance expenses.
+end note
+
+note left of Idle
+  In CeraSim, each machine type
+  has multiple instances (count).
+  Each instance is a SimPy Resource
+  with capacity=1.
+  
+  Example:
+  - 3 body prep lines
+  - 3 forming presses
+  - 2 kilns (bottleneck)
+end note
+
+@enduml

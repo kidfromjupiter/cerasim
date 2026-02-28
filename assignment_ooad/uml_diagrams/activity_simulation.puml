@@ -1,0 +1,97 @@
+@startuml
+!theme plain
+skinparam activityBackgroundColor #E3F2FD
+skinparam activityBorderColor #1565C0
+skinparam activityStartColor #2196F3
+skinparam activityEndColor #C62828
+
+title Simulation Execution Activity Diagram
+
+start
+
+:User Launches CeraSim;
+
+:Parse Command Line Arguments;
+
+if (Specific scenario selected?) then (yes)
+  :Load Single Scenario Configuration;
+else (no)
+  :Load All 4 Scenarios\n(Baseline, Supply Disruption,\nDemand Surge, Optimised);
+endif
+
+:Initialize Random Seed;
+
+:Display Banner;
+
+partition "For Each Scenario" {
+  
+  :Create SimPy Environment;
+  
+  :Initialize CeramicFactory Object;
+  
+  :Configure Scenario Parameters\n(Demand Factor, Reliability,\nDisruption Events, Extra Capacity);
+  
+  :Initialize Resources\n(Machines, Buffers, Stores);
+  
+  :Register SimPy Processes\n(Production Stages, Suppliers,\nDemand Generator, Order Fulfillment);
+  
+  fork
+    :Body Preparation Process;
+  fork again
+    :Forming & Drying Process;
+  fork again
+    :Surface Treatment Process;
+  fork again
+    :Kiln Firing Process;
+  fork again
+    :Finishing Process;
+  fork again
+    :Supply Monitoring Process;
+  fork again
+    :Demand Generation Process;
+  fork again
+    :Order Fulfillment Process;
+  fork again
+    :Daily Metrics Recorder;
+  fork again
+    :Machine Breakdown Handler;
+  end fork
+  
+  :Run Simulation\n(90 simulated days, 24h/day);
+  
+  while (Day < 90?) is (yes)
+    :Advance Simulation by 24 hours;
+    :Update Progress Bar;
+  endwhile (no)
+  
+  :Collect Event Logs\n(Batches, Orders, Deliveries,\nBreakdowns, Daily Snapshots);
+  
+  :Compute KPIs\n(Production, Revenue, Fill Rate,\nCycle Time, Inventory, Costs);
+  
+  :Store Results;
+}
+
+:Print KPI Tables for Each Scenario;
+
+if (Multiple scenarios run?) then (yes)
+  :Generate Comparison Table;
+endif
+
+if (Chart generation enabled?) then (yes)
+  
+  partition "Visualization" {
+    fork
+      :Generate Scenario Dashboards\n(Matplotlib PNG charts);
+    fork again
+      :Generate Comparison Charts;
+    end fork
+    
+    :Save to reports/ directory;
+  }
+endif
+
+:Display Key Insights\n(Bottlenecks, Recommendations);
+
+stop
+
+@enduml

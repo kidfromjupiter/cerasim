@@ -1,0 +1,112 @@
+@startuml
+!theme plain
+skinparam stateBorderColor #2E7D32
+skinparam stateBackgroundColor #E8F5E9
+
+title ProductionBatch State Machine Diagram
+
+[*] --> Created : Factory initiates\nnew batch
+
+state Created {
+  Created : batch_id assigned
+  Created : product type set
+  Created : quantity_m² = 250
+  Created : created_at timestamp
+}
+
+Created --> BodyPrepQueued : enters powder\nbuffer queue
+
+state BodyPrepQueued {
+  BodyPrepQueued : waiting for body prep line
+}
+
+BodyPrepQueued --> BodyPrepInProgress : machine available
+
+state BodyPrepInProgress {
+  BodyPrepInProgress : mixing raw materials
+  BodyPrepInProgress : ball milling
+  BodyPrepInProgress : spray drying
+}
+
+BodyPrepInProgress --> FormingQueued : body_prep complete\nset forming_done timestamp
+
+state FormingQueued {
+  FormingQueued : in unglazed_store
+  FormingQueued : waiting for press
+}
+
+FormingQueued --> FormingInProgress : press available
+
+state FormingInProgress {
+  FormingInProgress : isostatic pressing
+  FormingInProgress : roller drying
+}
+
+FormingInProgress --> GlazingQueued : [needs_glaze == True]
+FormingInProgress --> FiringQueued : [needs_glaze == False]
+
+state GlazingQueued {
+  GlazingQueued : waiting for glazing line
+}
+
+GlazingQueued --> GlazingInProgress : line available
+
+state GlazingInProgress {
+  GlazingInProgress : applying glaze
+  GlazingInProgress : digital printing
+}
+
+GlazingInProgress --> FiringQueued : set glazing_done\ntimestamp
+
+state FiringQueued {
+  FiringQueued : in ready_to_fire store
+  FiringQueued : waiting for kiln
+  FiringQueued : [BOTTLENECK]
+}
+
+FiringQueued --> FiringInProgress : kiln available
+
+state FiringInProgress {
+  FiringInProgress : firing at 1150-1200°C
+  FiringInProgress : duration: ~4 hours
+  FiringInProgress : [CRITICAL STAGE]
+}
+
+FiringInProgress --> FinishingQueued : set firing_done\ntimestamp
+
+state FinishingQueued {
+  FinishingQueued : in fired_store
+  FinishingQueued : waiting for finishing line
+}
+
+FinishingQueued --> QualityInspection : line available
+
+state QualityInspection {
+  QualityInspection : visual & dimensional check
+  QualityInspection : classify tiles
+}
+
+QualityInspection --> Completed : set grade_a_m²,\ngrade_b_m², reject_m²\nset finished_at timestamp
+
+state Completed {
+  Completed : cycle_time_hr calculated
+  Completed : saleable_m² = grade_a + grade_b
+  Completed : added to FG inventory
+  Completed : metrics recorded
+}
+
+Completed --> [*]
+
+note right of FiringQueued
+  Kiln firing is the system bottleneck.
+  Batches typically queue longest here.
+  Only 2 kilns × 24h/4h = 12 batches/day max.
+end note
+
+note right of Completed
+  Typical cycle time: 12-20 hours
+  depending on queuing delays and
+  machine breakdowns.
+end note
+
+@enduml

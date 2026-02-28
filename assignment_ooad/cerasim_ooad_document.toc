@@ -1,0 +1,50 @@
+\contentsline {section}{\numberline {1}Introduction}{3}{section.1}%
+\contentsline {subsection}{\numberline {1.1}Overview}{3}{subsection.1.1}%
+\contentsline {subsection}{\numberline {1.2}Business Problem and Motivation}{3}{subsection.1.2}%
+\contentsline {subsection}{\numberline {1.3}Object-Oriented Approach}{3}{subsection.1.3}%
+\contentsline {subsubsection}{\numberline {1.3.1}Key Objects and Their Responsibilities}{3}{subsubsection.1.3.1}%
+\contentsline {subsubsection}{\numberline {1.3.2}Object Interactions and Communication}{4}{subsubsection.1.3.2}%
+\contentsline {subsection}{\numberline {1.4}Application Features}{5}{subsection.1.4}%
+\contentsline {subsubsection}{\numberline {1.4.1}For Customers (Management/Decision Makers)}{5}{subsubsection.1.4.1}%
+\contentsline {subsubsection}{\numberline {1.4.2}For End Users (Engineers/Analysts)}{5}{subsubsection.1.4.2}%
+\contentsline {subsection}{\numberline {1.5}Simulation Scenarios}{5}{subsection.1.5}%
+\contentsline {subsection}{\numberline {1.6}Technical Architecture}{6}{subsection.1.6}%
+\contentsline {subsection}{\numberline {1.7}Key Insights Delivered}{6}{subsection.1.7}%
+\contentsline {section}{\numberline {2}Non-Functional Requirements}{6}{section.2}%
+\contentsline {subsection}{\numberline {2.1}Performance Requirements}{7}{subsection.2.1}%
+\contentsline {subsection}{\numberline {2.2}Scalability Requirements}{7}{subsection.2.2}%
+\contentsline {subsection}{\numberline {2.3}Reliability and Availability Requirements}{8}{subsection.2.3}%
+\contentsline {subsection}{\numberline {2.4}Usability Requirements}{8}{subsection.2.4}%
+\contentsline {subsection}{\numberline {2.5}Maintainability and Extensibility Requirements}{9}{subsection.2.5}%
+\contentsline {subsection}{\numberline {2.6}Portability Requirements}{9}{subsection.2.6}%
+\contentsline {subsection}{\numberline {2.7}Security and Data Integrity Requirements}{10}{subsection.2.7}%
+\contentsline {subsection}{\numberline {2.8}Deployment and Installation Requirements}{10}{subsection.2.8}%
+\contentsline {subsection}{\numberline {2.9}Compliance and Standards Requirements}{10}{subsection.2.9}%
+\contentsline {section}{\numberline {3}Object-Oriented Analysis and Design}{11}{section.3}%
+\contentsline {subsection}{\numberline {3.1}Use Case Diagram}{11}{subsection.3.1}%
+\contentsline {subsubsection}{\numberline {3.1.1}Actors}{11}{subsubsection.3.1.1}%
+\contentsline {subsubsection}{\numberline {3.1.2}Use Case Categories}{11}{subsubsection.3.1.2}%
+\contentsline {subsection}{\numberline {3.2}Activity Diagrams}{13}{subsection.3.2}%
+\contentsline {subsubsection}{\numberline {3.2.1}Production Process Activity Diagram}{13}{subsubsection.3.2.1}%
+\contentsline {subsubsection}{\numberline {3.2.2}Simulation Execution Activity Diagram}{15}{subsubsection.3.2.2}%
+\contentsline {subsection}{\numberline {3.3}Sequence Diagrams}{16}{subsection.3.3}%
+\contentsline {subsubsection}{\numberline {3.3.1}Production Batch Processing Sequence}{16}{subsubsection.3.3.1}%
+\contentsline {subsubsection}{\numberline {3.3.2}Customer Order Fulfillment Sequence}{18}{subsubsection.3.3.2}%
+\contentsline {subsection}{\numberline {3.4}State Machine Diagrams}{20}{subsection.3.4}%
+\contentsline {subsubsection}{\numberline {3.4.1}ProductionBatch State Machine}{20}{subsubsection.3.4.1}%
+\contentsline {subsubsection}{\numberline {3.4.2}CustomerOrder State Machine}{22}{subsubsection.3.4.2}%
+\contentsline {subsubsection}{\numberline {3.4.3}Machine Resource State Machine}{23}{subsubsection.3.4.3}%
+\contentsline {subsection}{\numberline {3.5}Object-Oriented Design Principles Demonstrated}{24}{subsection.3.5}%
+\contentsline {subsubsection}{\numberline {3.5.1}Encapsulation}{24}{subsubsection.3.5.1}%
+\contentsline {subsubsection}{\numberline {3.5.2}Abstraction}{25}{subsubsection.3.5.2}%
+\contentsline {subsubsection}{\numberline {3.5.3}Modularity}{25}{subsubsection.3.5.3}%
+\contentsline {subsubsection}{\numberline {3.5.4}Composition}{25}{subsubsection.3.5.4}%
+\contentsline {subsubsection}{\numberline {3.5.5}Polymorphism}{25}{subsubsection.3.5.5}%
+\contentsline {section}{\numberline {4}References}{25}{section.4}%
+\contentsline {subsection}{\numberline {4.1}Textbooks and Academic Resources}{25}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}Software Documentation}{26}{subsection.4.2}%
+\contentsline {subsection}{\numberline {4.3}UML and Design Resources}{26}{subsection.4.3}%
+\contentsline {subsection}{\numberline {4.4}Ceramic Industry Domain Knowledge}{26}{subsection.4.4}%
+\contentsline {subsection}{\numberline {4.5}Supply Chain and Operations Management}{26}{subsection.4.5}%
+\contentsline {subsection}{\numberline {4.6}Online Learning Resources}{26}{subsection.4.6}%
+\contentsline {subsection}{\numberline {4.7}Tools Used}{27}{subsection.4.7}%

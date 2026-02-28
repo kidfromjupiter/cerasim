@@ -1,0 +1,97 @@
+@startuml
+!theme plain
+skinparam sequenceMessageAlign center
+
+title Customer Order Fulfillment Sequence Diagram
+
+actor "DemandGenerator" as DemGen
+participant "Factory" as Factory
+participant "CustomerOrder" as Order
+participant "OrderQueue" as Queue
+participant "FGInventory" as FG
+participant "MetricsCollector" as Metrics
+
+== Order Creation ==
+
+DemGen -> Order: create(customer, product,\nquantity_m², due_date)
+activate Order
+Order -> Order: generate order_id
+Order -> Order: set unit_price from config
+Order --> DemGen: order object
+
+DemGen -> Queue: put(order)
+activate Queue
+Queue --> DemGen: queued
+
+== Order Fulfillment ==
+
+Factory -> Queue: get()
+Queue --> Factory: order
+deactivate Queue
+activate Factory
+
+Factory -> Order: check product & quantity
+Order --> Factory: product, quantity_m²
+
+Factory -> FG: check inventory[product]
+activate FG
+FG --> Factory: available_m²
+
+alt Sufficient Inventory
+    
+    Factory -> FG: withdraw(quantity_m²)
+    FG -> FG: inventory[product] -= quantity_m²
+    FG --> Factory: fulfilled
+    
+    Factory -> Order: set fulfilled_qty = quantity_m²
+    Factory -> Order: set fulfilled_at = current_time
+    
+    Order -> Order: calculate revenue_eur
+    Order -> Order: check is_overdue
+    
+    Factory -> Metrics: record order fulfillment
+    activate Metrics
+    Metrics -> Metrics: add to orders[]
+    Metrics -> Metrics: calculate_fill_rate()
+    Metrics --> Factory: logged
+    deactivate Metrics
+    
+else Partial Inventory
+    
+    Factory -> FG: withdraw(available_m²)
+    FG -> FG: inventory[product] = 0
+    FG --> Factory: partial fulfillment
+    
+    Factory -> Order: set fulfilled_qty = available_m²
+    Factory -> Order: set fulfilled_at = current_time
+    
+    Order -> Order: calculate fill_fraction
+    
+    Factory -> Metrics: record stockout event
+    activate Metrics
+    Metrics -> Metrics: increment stockout_events
+    Metrics --> Factory: logged
+    deactivate Metrics
+    
+else No Inventory
+    
+    Factory -> Order: fulfilled_qty = 0
+    
+    Factory -> Metrics: record stockout event
+    activate Metrics
+    Metrics -> Metrics: increment lost_sales
+    Metrics --> Factory: logged
+    deactivate Metrics
+    
+end
+
+Factory -> Metrics: add order to completed list
+activate Metrics
+Metrics --> Factory: recorded
+
+deactivate Factory
+deactivate Order
+deactivate FG
+deactivate Metrics
+
+@enduml

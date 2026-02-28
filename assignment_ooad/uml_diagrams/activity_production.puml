@@ -1,0 +1,80 @@
+@startuml
+!theme plain
+skinparam activityBackgroundColor #E8F5E9
+skinparam activityBorderColor #2E7D32
+skinparam activityStartColor #4CAF50
+skinparam activityEndColor #C62828
+
+title Production Process Activity Diagram - Tile Manufacturing
+
+start
+
+:Check Raw Material Availability;
+
+if (Sufficient raw materials?) then (yes)
+  :Create Production Batch;
+  :Assign Batch ID;
+  
+  partition "Body Preparation Stage" {
+    :Queue for Body Preparation Line;
+    :Mix Raw Materials\n(Clay, Feldspar, Silica, Kaolin);
+    :Ball Milling;
+    :Spray Drying;
+    :Store Powder in Buffer;
+  }
+  
+  partition "Forming & Drying Stage" {
+    :Queue for Hydraulic Press;
+    :Press Tiles (250 m² batch);
+    :Dry in Roller Dryer;
+    :Store Unglazed Tiles;
+  }
+  
+  if (Product requires glaze?) then (yes)
+    partition "Surface Treatment Stage" {
+      :Queue for Glazing Line;
+      :Apply Glaze Layer;
+      :Digital Inkjet Printing;
+      :Store Ready-to-Fire Tiles;
+    }
+  else (no)
+    :Move to Ready-to-Fire Store;
+  endif
+  
+  partition "Kiln Firing Stage" {
+    :Queue for Kiln\n(Bottleneck Station);
+    :Load into Roller Hearth Kiln;
+    :Fire at 1150-1200°C\n(~4 hours);
+    :Cool Down;
+    :Store Fired Tiles;
+  }
+  
+  partition "Finishing Stage" {
+    :Quality Inspection;
+    
+    fork
+      :Grade A Tiles;
+    fork again
+      :Grade B Tiles;
+    fork again
+      :Reject Tiles;
+    end fork
+    
+    :Cutting & Calibration;
+    :Packaging;
+    :Update Finished Goods Inventory;
+  }
+  
+  :Record Batch Metrics\n(Cycle Time, Yield, Quality);
+  
+  stop
+  
+else (no)
+  :Log Material Shortage;
+  :Trigger Supplier Reorder;
+  :Wait for Delivery;
+  
+  stop
+endif
+
+@enduml

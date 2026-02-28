@@ -1,0 +1,102 @@
+@startuml
+!theme plain
+skinparam stateBorderColor #1565C0
+skinparam stateBackgroundColor #E3F2FD
+
+title CustomerOrder State Machine Diagram
+
+[*] --> Created : Demand generator\ncreates order
+
+state Created {
+  Created : order_id assigned
+  Created : customer & product set
+  Created : quantity_m² determined
+  Created : due_at = created_at + lead_time
+  Created : unit_price from config
+  Created : fulfilled_qty = 0
+}
+
+Created --> Queued : added to\norder_queue
+
+state Queued {
+  Queued : waiting for fulfillment process
+  Queued : position in FIFO queue
+}
+
+Queued --> Processing : fulfillment process\ngets order from queue
+
+state Processing {
+  Processing : check FG inventory
+  Processing : attempt to fulfill
+}
+
+Processing --> FullyFulfilled : inventory >= quantity_m²\nfulfilled_qty = quantity_m²
+
+Processing --> PartiallyFulfilled : 0 < inventory < quantity_m²\nfulfilled_qty = available
+
+Processing --> Unfulfilled : inventory = 0\nfulfilled_qty = 0
+
+state FullyFulfilled {
+  FullyFulfilled : is_complete = True
+  FullyFulfilled : fill_fraction = 1.0
+  FullyFulfilled : fulfilled_at timestamp set
+  FullyFulfilled : revenue_eur = quantity * price
+}
+
+state PartiallyFulfilled {
+  PartiallyFulfilled : is_complete = False
+  PartiallyFulfilled : 0 < fill_fraction < 1.0
+  PartiallyFulfilled : fulfilled_at timestamp set
+  PartiallyFulfilled : revenue_eur = fulfilled_qty * price
+  PartiallyFulfilled : stockout event recorded
+}
+
+state Unfulfilled {
+  Unfulfilled : is_complete = False
+  Unfulfilled : fill_fraction = 0.0
+  Unfulfilled : revenue_eur = 0
+  Unfulfilled : lost sale recorded
+}
+
+FullyFulfilled --> OnTime : fulfilled_at <= due_at
+
+FullyFulfilled --> Overdue : fulfilled_at > due_at
+
+state OnTime {
+  OnTime : is_overdue = False
+  OnTime : customer satisfaction: HIGH
+}
+
+state Overdue {
+  Overdue : is_overdue = True
+  Overdue : customer satisfaction: LOW
+  Overdue : potential penalty
+}
+
+OnTime --> Closed
+Overdue --> Closed
+
+PartiallyFulfilled --> Closed : partial fulfillment accepted
+
+Unfulfilled --> Closed : order cancelled
+
+state Closed {
+  Closed : final metrics recorded
+  Closed : affects KPIs:\n  - fill_rate_pct\n  - on_time_delivery_pct\n  - stockout_events
+}
+
+Closed --> [*]
+
+note right of Processing
+  Fulfillment follows FIFO order.
+  Express orders could be prioritized
+  in future enhancement.
+end note
+
+note bottom of PartiallyFulfilled
+  Partial fulfillment indicates
+  insufficient finished goods inventory.
+  Triggers production replanning.
+end note
+
+@enduml

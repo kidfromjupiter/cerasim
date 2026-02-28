@@ -1,0 +1,93 @@
+@startuml
+!theme plain
+skinparam packageStyle rectangle
+skinparam actorStyle awesome
+
+title CeraSim Use Case Diagram - AzulCer Supply Chain Simulator
+
+left to right direction
+
+actor "Factory Manager" as FM
+actor "Supply Chain Analyst" as SCA
+actor "Operations Director" as OD
+actor "System Administrator" as SA
+
+rectangle "CeraSim System" {
+  
+  package "Simulation Management" {
+    usecase "Configure Simulation Parameters" as UC1
+    usecase "Run Simulation Scenario" as UC2
+    usecase "Monitor Simulation Progress" as UC3
+    usecase "Stop/Pause Simulation" as UC4
+  }
+  
+  package "Scenario Analysis" {
+    usecase "Select Scenario Type" as UC5
+    usecase "Compare Multiple Scenarios" as UC6
+    usecase "Define Custom Scenario" as UC7
+  }
+  
+  package "Production Management" {
+    usecase "Track Production Batches" as UC8
+    usecase "Monitor Machine Status" as UC9
+    usecase "Manage Raw Material Inventory" as UC10
+    usecase "Process Customer Orders" as UC11
+  }
+  
+  package "Reporting & Analytics" {
+    usecase "View KPI Dashboard" as UC12
+    usecase "Generate Performance Reports" as UC13
+    usecase "Export Simulation Results" as UC14
+    usecase "Visualize Trends" as UC15
+  }
+  
+  package "System Configuration" {
+    usecase "Configure Products" as UC16
+    usecase "Configure Machines" as UC17
+    usecase "Configure Suppliers" as UC18
+    usecase "Set System Parameters" as UC19
+  }
+}
+
+' Factory Manager relationships
+FM --> UC2
+FM --> UC3
+FM --> UC12
+FM --> UC8
+FM --> UC9
+
+' Supply Chain Analyst relationships
+SCA --> UC5
+SCA --> UC6
+SCA --> UC7
+SCA --> UC12
+SCA --> UC13
+SCA --> UC14
+SCA --> UC15
+SCA --> UC10
+SCA --> UC11
+
+' Operations Director relationships
+OD --> UC6
+OD --> UC13
+OD --> UC15
+
+' System Administrator relationships
+SA --> UC1
+SA --> UC16
+SA --> UC17
+SA --> UC18
+SA --> UC19
+SA --> UC4
+
+' Include relationships
+UC2 ..> UC5 : <<include>>
+UC2 ..> UC3 : <<include>>
+UC6 ..> UC2 : <<include>>
+UC13 ..> UC12 : <<include>>
+
+' Extend relationships
+UC7 ..> UC5 : <<extend>>
+UC4 ..> UC2 : <<extend>>
+
+@enduml

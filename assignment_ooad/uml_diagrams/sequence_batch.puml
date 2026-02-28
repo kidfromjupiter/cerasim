@@ -1,0 +1,108 @@
+@startuml
+!theme plain
+skinparam sequenceMessageAlign center
+skinparam maxMessageSize 150
+
+title Production Batch Processing Sequence Diagram
+
+actor "SimPy\nEnvironment" as Env
+participant "Factory" as Factory
+participant "ProductionBatch" as Batch
+participant "BodyPrepLine" as BodyPrep
+participant "FormingPress" as Forming
+participant "GlazingLine" as Glazing
+participant "Kiln" as Kiln
+participant "FinishingLine" as Finishing
+participant "MetricsCollector" as Metrics
+participant "FG Inventory" as FG
+
+Env -> Factory: trigger body_preparation()
+activate Factory
+
+Factory -> Batch: create(batch_id, product, 250 m²)
+activate Batch
+Batch --> Factory: batch object
+
+Factory -> Factory: consume raw materials\n(clay, feldspar, silica, kaolin)
+
+Factory -> BodyPrep: request()
+activate BodyPrep
+BodyPrep --> Factory: granted
+
+Factory -> Factory: process for 3.5h\n(mixing, milling, drying)
+
+Factory -> Batch: set forming_done timestamp
+Factory -> BodyPrep: release()
+deactivate BodyPrep
+
+Factory -> Factory: put batch in powder_buffer
+
+Factory -> Forming: request()
+activate Forming
+Forming --> Factory: granted
+
+Factory -> Factory: press & dry for 1.8h
+
+Factory -> Batch: set forming_done timestamp
+Factory -> Forming: release()
+deactivate Forming
+
+Factory -> Factory: put batch in unglazed_store
+
+alt Product Needs Glaze
+    Factory -> Glazing: request()
+    activate Glazing
+    Glazing --> Factory: granted
+    
+    Factory -> Factory: apply glaze for 0.35h
+    Factory -> Batch: set glazing_done timestamp
+    Factory -> Glazing: release()
+    deactivate Glazing
+else Unglazed Product
+    Factory -> Factory: skip glazing
+end
+
+Factory -> Factory: put batch in ready_to_fire
+
+Factory -> Kiln: request()
+activate Kiln
+note right: Kiln is the bottleneck\n(4h per batch, 2 kilns)
+Kiln --> Factory: granted
+
+Factory -> Factory: fire at 1150-1200°C\nfor 4 hours
+
+Factory -> Batch: set firing_done timestamp
+Factory -> Kiln: release()
+deactivate Kiln
+
+Factory -> Factory: put batch in fired_store
+
+Factory -> Finishing: request()
+activate Finishing
+Finishing --> Factory: granted
+
+Factory -> Factory: inspect quality\ncut, calibrate, package (0.6h)
+
+Factory -> Batch: classify output\n(Grade A, Grade B, Rejects)
+
+Factory -> Batch: set finished_at timestamp
+Batch -> Batch: calculate cycle_time_hr
+
+Factory -> Finishing: release()
+deactivate Finishing
+
+Factory -> FG: add saleable_m² to inventory[product]
+activate FG
+FG --> Factory: updated level
+
+Factory -> Metrics: record_batch(batch)
+activate Metrics
+Metrics -> Metrics: store in completed_batches[]
+Metrics --> Factory: logged
+
+deactivate Factory
+deactivate Batch
+deactivate FG
+deactivate Metrics
+
+@enduml

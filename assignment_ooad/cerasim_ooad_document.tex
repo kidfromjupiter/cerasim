@@ -1,0 +1,846 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{tcolorbox}
+\usepackage{booktabs}
+\usepackage{longtable}
+
+% Header and footer
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{Group 20 - WastedPotential}
+\lhead{CeraSim OOAD Document}
+\rfoot{Page \thepage}
+
+% Colors
+\definecolor{primaryblue}{RGB}{46, 134, 171}
+\definecolor{secondarygreen}{RGB}{106, 153, 78}
+
+% Section formatting
+\titleformat{\section}
+  {\normalfont\Large\bfseries\color{primaryblue}}{\thesection}{1em}{}
+\titleformat{\subsection}
+  {\normalfont\large\bfseries\color{secondarygreen}}{\thesubsection}{1em}{}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=primaryblue,
+    filecolor=magenta,      
+    urlcolor=blue,
+    pdftitle={CeraSim OOAD Document},
+    pdfauthor={Group 20 - WastedPotential},
+}
+
+\begin{document}
+
+% ============================================================================
+% COVER PAGE
+% ============================================================================
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+    
+    {\Huge \textbf{Object-Oriented Analysis and Design}}\\[0.5cm]
+    {\Large \textbf{CeraSim}}\\[0.3cm]
+    {\large AzulCer Tile Industries Supply Chain Simulator}\\[2cm]
+    
+    \begin{tcolorbox}[colback=primaryblue!5!white,colframe=primaryblue!75!black,width=0.8\textwidth]
+        \centering
+        \large
+        \textbf{Group 20 - WastedPotential}\\[0.5cm]
+        
+        \begin{tabular}{ll}
+            \textbf{Team Members:} & \\[0.2cm]
+            & Oshada Jayasinghe \\
+            & Sithuka Jayawardhana \\
+            & Lasan Mahaliyana \\
+            & Sithum Fernando \\
+            & Ranuja Jayawardena \\
+        \end{tabular}
+    \end{tcolorbox}
+    
+    \vfill
+    
+    {\large Object-Oriented Software Development}\\
+    {\large Assignment - Analysis \& Design Document}\\[0.5cm]
+    {\large \today}
+    
+\end{titlepage}
+
+% ============================================================================
+% TABLE OF CONTENTS
+% ============================================================================
+\tableofcontents
+\newpage
+
+% ============================================================================
+% 1. INTRODUCTION
+% ============================================================================
+\section{Introduction}
+
+\subsection{Overview}
+
+\textbf{CeraSim} is a comprehensive discrete-event simulation system designed for \textbf{AzulCer Tile Industries}, a Portuguese ceramic tile manufacturer based in Aveiro, Portugal. The application models the complete supply chain operations of a tile manufacturing facility, from raw material procurement through production stages to customer order fulfillment.
+
+Founded in 1987, AzulCer employs 240 workers and produces three primary product lines: premium glazed floor tiles (60×60 cm), glazed wall tiles (30×45 cm), and rustic outdoor tiles (45×45 cm). The factory operates continuously, processing raw materials (clay, feldspar, silica, and kaolin) through multiple production stages to produce high-quality ceramic tiles.
+
+\subsection{Business Problem and Motivation}
+
+Modern manufacturing operations face complex challenges in supply chain management, capacity planning, and operational optimization. AzulCer management identified several critical business questions:
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Bottleneck Identification:} Which production stage limits overall throughput?
+    \item \textbf{Disruption Impact:} How do supplier delays affect production and revenue?
+    \item \textbf{Demand Volatility:} Can the facility handle 30\% seasonal demand surges?
+    \item \textbf{Investment ROI:} What is the financial return of adding production capacity?
+    \item \textbf{Inventory Optimization:} What safety stock levels minimize stockouts while controlling costs?
+\end{itemize}
+
+Traditional analytical methods struggle with the stochastic nature of manufacturing systems—machine breakdowns, variable processing times, unpredictable supplier delays, and fluctuating customer demand create complex interdependencies that are difficult to model mathematically.
+
+\textbf{CeraSim} addresses these challenges through discrete-event simulation, allowing management to conduct risk-free "what-if" experiments on a digital twin of their facility.
+
+\subsection{Object-Oriented Approach}
+
+The application is built using \textbf{Object-Oriented Software Development (OOSD)} methodology, leveraging Python and the SimPy discrete-event simulation framework. This approach provides several advantages:
+
+\subsubsection{Key Objects and Their Responsibilities}
+
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{ProductionBatch} - Represents a 250 m² tile batch flowing through the production pipeline
+    \begin{itemize}
+        \item Encapsulates batch identity, product type, quantity, and quality grades
+        \item Tracks stage completion timestamps for cycle time analysis
+        \item Maintains quality outcomes (Grade A, Grade B, rejects)
+    \end{itemize}
+    
+    \item \textbf{CustomerOrder} - Models purchase orders from distributors and retailers
+    \begin{itemize}
+        \item Manages order lifecycle from creation to fulfillment
+        \item Calculates revenue, fill rates, and on-time delivery metrics
+        \item Distinguishes between express and standard orders
+    \end{itemize}
+    
+    \item \textbf{SupplierDelivery} - Represents raw material shipments
+    \begin{itemize}
+        \item Tracks lead times and on-time delivery performance
+        \item Maintains cost information for financial analysis
+        \item Links to specific suppliers (clay, feldspar, silica, kaolin vendors)
+    \end{itemize}
+    
+    \item \textbf{CeramicFactory} - Central orchestrator of the simulation
+    \begin{itemize}
+        \item Manages production resources (machines, buffers, inventories)
+        \item Coordinates concurrent production processes using SimPy
+        \item Handles machine breakdowns and maintenance events
+        \item Collects performance metrics throughout the simulation
+    \end{itemize}
+    
+    \item \textbf{BreakdownEvent} - Models equipment failures
+    \begin{itemize}
+        \item Records failure occurrence time and repair duration
+        \item Associates with specific machine instances
+        \item Accumulates maintenance costs
+    \end{itemize}
+    
+    \item \textbf{MetricsCollector} - Aggregates and analyzes simulation data
+    \begin{itemize}
+        \item Stores event logs (batches, orders, deliveries, breakdowns)
+        \item Computes Key Performance Indicators (KPIs)
+        \item Provides data for reporting and visualization
+    \end{itemize}
+\end{enumerate}
+
+\subsubsection{Object Interactions and Communication}
+
+The simulation operates through \textbf{message passing} and \textbf{shared resource coordination}:
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{ProductionBatch} objects traverse production stages, requesting machine resources
+    \item \textbf{CeramicFactory} mediates access to limited resources (3 presses, 2 kilns, etc.)
+    \item \textbf{SimPy Containers} model continuous quantities (raw materials, finished goods)
+    \item \textbf{SimPy Stores} model discrete queues (batches waiting for processing)
+    \item \textbf{SimPy Resources} model capacity-constrained machines with queueing
+\end{itemize}
+
+This design elegantly maps manufacturing reality to software objects—each tile batch is a genuine object with identity and state, machines are resources with capacity constraints, and the factory orchestrates their interactions according to production routing logic.
+
+\subsection{Application Features}
+
+\subsubsection{For Customers (Management/Decision Makers)}
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Scenario Comparison:} Evaluate multiple operational strategies side-by-side
+    \item \textbf{Investment Analysis:} Assess capital expenditure ROI for new equipment
+    \item \textbf{Risk Assessment:} Quantify financial impact of supply disruptions
+    \item \textbf{Capacity Planning:} Determine production capacity for demand forecasts
+    \item \textbf{Inventory Optimization:} Balance holding costs against stockout risk
+\end{itemize}
+
+\subsubsection{For End Users (Engineers/Analysts)}
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Interactive CLI:} Command-line interface with progress visualization
+    \item \textbf{Flexible Scenario Configuration:} Run individual or all four scenarios
+    \item \textbf{Reproducible Results:} Specify random seeds for deterministic runs
+    \item \textbf{Rich Console Output:} Color-coded KPI tables with clear formatting
+    \item \textbf{Automated Reporting:} Matplotlib dashboards saved as PNG files
+    \item \textbf{Real-time Progress Tracking:} Visual progress bars during 90-day simulations
+    \item \textbf{Extensibility:} Add new products, machines, suppliers, or scenarios via configuration
+\end{itemize}
+
+\subsection{Simulation Scenarios}
+
+CeraSim includes four pre-configured scenarios that model realistic business situations:
+
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{Baseline} - Normal operations with historical demand patterns and supplier reliability
+    
+    \item \textbf{Supply Disruption} - Models a 35-day kaolin supplier port strike (days 15-50), simulating geopolitical or labor disruptions
+    
+    \item \textbf{Demand Surge} - 30\% increase in customer orders, representing seasonal peaks or successful marketing campaigns
+    
+    \item \textbf{Optimised} - Capital investment scenario with a third kiln (+€2.4M CAPEX) and 50\% increased safety stock levels
+\end{enumerate}
+
+Each scenario produces detailed KPIs including production volume, revenue, fill rates, cycle times, inventory levels, machine utilization, breakdown frequencies, and net profit.
+
+\subsection{Technical Architecture}
+
+\begin{figure}[H]
+    \centering
+    \begin{tcolorbox}[colback=gray!5!white,colframe=gray!75!black,width=0.95\textwidth,title=System Components]
+        \textbf{cerasim/}
+        \begin{itemize}[leftmargin=*]
+            \item \texttt{config.py} — All simulation parameters (products, machines, suppliers, scenarios)
+            \item \texttt{models.py} — Data classes (ProductionBatch, CustomerOrder, SupplierDelivery, BreakdownEvent)
+            \item \texttt{factory.py} — SimPy processes implementing the discrete-event simulation engine
+            \item \texttt{metrics.py} — KPI computation from collected event logs
+            \item \texttt{reports.py} — Rich console tables + Matplotlib visualization
+        \end{itemize}
+        
+        \textbf{main.py} — CLI entrypoint orchestrating simulation runs and output generation
+        
+        \textbf{reports/} — Generated PNG dashboard charts
+    \end{tcolorbox}
+\end{figure}
+
+\subsection{Key Insights Delivered}
+
+The simulation provides actionable insights such as:
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Bottleneck:} Kiln firing (4h/batch, 2 kilns) limits throughput to 12 batches/day (3,000 m²/day)
+    \item \textbf{Disruption Impact:} 35-day kaolin strike causes ~15,000 m² production loss (€200k+ revenue impact)
+    \item \textbf{ROI:} Third kiln increases output by 20\%, with 2.3-year simple payback
+    \item \textbf{Service Level:} Baseline 93\% fill rate drops to 78\% during demand surges without inventory buffers
+\end{itemize}
+
+% ============================================================================
+% 2. NON-FUNCTIONAL REQUIREMENTS
+% ============================================================================
+\section{Non-Functional Requirements}
+
+Non-functional requirements define \textbf{how} the system performs its functions, addressing quality attributes beyond functional behavior.
+
+\subsection{Performance Requirements}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|p{0.35\textwidth}|p{0.55\textwidth}|}
+\hline
+\textbf{Requirement} & \textbf{Specification} \\
+\hline
+Simulation Execution Time & Single 90-day scenario shall complete within 10 seconds on standard hardware (Intel i5/AMD Ryzen 5 or equivalent, 8GB RAM) \\
+\hline
+Multi-Scenario Processing & All four scenarios shall complete within 60 seconds including chart generation \\
+\hline
+Memory Footprint & Total memory usage shall not exceed 500 MB during execution \\
+\hline
+Event Processing Rate & System shall process minimum 10,000 simulation events per second \\
+\hline
+Report Generation & KPI computation and table rendering shall complete within 2 seconds per scenario \\
+\hline
+Chart Rendering & Matplotlib dashboard generation shall complete within 5 seconds per scenario \\
+\hline
+\end{tabular}
+\caption{Performance Requirements}
+\end{table}
+
+\subsection{Scalability Requirements}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|p{0.35\textwidth}|p{0.55\textwidth}|}
+\hline
+\textbf{Requirement} & \textbf{Specification} \\
+\hline
+Simulation Duration & System shall support simulations from 30 to 365 days without performance degradation \\
+\hline
+Product Catalog & Support up to 20 distinct product types with configurable parameters \\
+\hline
+Machine Types & Support up to 15 different machine categories with multiple instances per type \\
+\hline
+Supplier Network & Model up to 10 raw material suppliers with independent reliability characteristics \\
+\hline
+Batch Processing & Handle concurrent tracking of up to 5,000 production batches \\
+\hline
+Order Volume & Process up to 50,000 customer orders during simulation period \\
+\hline
+\end{tabular}
+\caption{Scalability Requirements}
+\end{table}
+
+\subsection{Reliability and Availability Requirements}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|p{0.35\textwidth}|p{0.55\textwidth}|}
+\hline
+\textbf{Requirement} & \textbf{Specification} \\
+\hline
+Simulation Determinism & Given identical random seed, simulation shall produce identical results across runs (bit-exact reproducibility) \\
+\hline
+Error Handling & All exceptions shall be caught and logged with meaningful error messages; system shall fail gracefully \\
+\hline
+Data Validation & Configuration parameters shall be validated at startup; invalid values shall be rejected with clear diagnostics \\
+\hline
+Numerical Stability & Floating-point arithmetic shall maintain 6 decimal places of precision for all financial calculations \\
+\hline
+Crash Recovery & Simulation state shall be dumpable for debugging; ability to inspect factory state at any simulation time \\
+\hline
+\end{tabular}
+\caption{Reliability Requirements}
+\end{table}
+
+\subsection{Usability Requirements}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|p{0.35\textwidth}|p{0.55\textwidth}|}
+\hline
+\textbf{Requirement} & \textbf{Specification} \\
+\hline
+Command-Line Interface & Intuitive CLI with self-documenting help text (\texttt{--help} flag) \\
+\hline
+Progress Visualization & Real-time progress bars with ETA during long-running simulations \\
+\hline
+Output Clarity & KPI tables shall use thousand separators, 1 decimal place for percentages, color-coding for critical metrics \\
+\hline
+Learning Curve & New users shall be able to run baseline simulation within 5 minutes of reading documentation \\
+\hline
+Chart Readability & All visualizations shall include titles, axis labels, legends, and use colorblind-friendly palettes \\
+\hline
+Error Messages & Error messages shall specify the problem, affected parameter, and corrective action \\
+\hline
+\end{tabular}
+\caption{Usability Requirements}
+\end{table}
+
+\subsection{Maintainability and Extensibility Requirements}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|p{0.35\textwidth}|p{0.55\textwidth}|}
+\hline
+\textbf{Requirement} & \textbf{Specification} \\
+\hline
+Code Documentation & All classes and public methods shall have docstrings following Google Python Style Guide \\
+\hline
+Configuration Isolation & All simulation parameters (products, machines, suppliers, scenarios) shall be defined in \texttt{config.py} without code changes \\
+\hline
+Modular Design & Production stages, supplier processes, and demand generation shall be independently modifiable \\
+\hline
+Adding Products & New products shall be addable via configuration entries without modifying simulation logic \\
+\hline
+Adding Machines & New production stages shall require adding one process method and registering it \\
+\hline
+Custom Scenarios & Users shall define new scenarios by adding configuration dictionary entries \\
+\hline
+Code Complexity & Individual functions shall not exceed 100 lines; cyclomatic complexity shall not exceed 15 \\
+\hline
+\end{tabular}
+\caption{Maintainability Requirements}
+\end{table}
+
+\subsection{Portability Requirements}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|p{0.35\textwidth}|p{0.55\textwidth}|}
+\hline
+\textbf{Requirement} & \textbf{Specification} \\
+\hline
+Operating Systems & Shall run on Linux, macOS, and Windows 10/11 without modification \\
+\hline
+Python Version & Compatible with Python 3.9, 3.10, 3.11, and 3.12 \\
+\hline
+Dependencies & All dependencies shall be installable via \texttt{pip install -r requirements.txt} \\
+\hline
+Virtualization & Shall execute in Docker containers and Python virtual environments \\
+\hline
+Terminal Compatibility & Console output shall render correctly in standard terminals (bash, zsh, PowerShell, Windows Terminal) \\
+\hline
+\end{tabular}
+\caption{Portability Requirements}
+\end{table}
+
+\subsection{Security and Data Integrity Requirements}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|p{0.35\textwidth}|p{0.55\textwidth}|}
+\hline
+\textbf{Requirement} & \textbf{Specification} \\
+\hline
+Input Sanitization & All configuration values shall be type-checked and range-validated \\
+\hline
+File Permissions & Generated reports shall have read permissions for user and group (644) \\
+\hline
+Sensitive Data & No credentials, API keys, or sensitive business data shall be hardcoded \\
+\hline
+Audit Trail & All simulation runs shall log scenario ID, seed, timestamp, and execution duration \\
+\hline
+Data Consistency & Inventory levels shall never go negative; mass balance checks shall verify no material creation/destruction \\
+\hline
+\end{tabular}
+\caption{Security and Data Integrity Requirements}
+\end{table}
+
+\subsection{Deployment and Installation Requirements}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|p{0.35\textwidth}|p{0.55\textwidth}|}
+\hline
+\textbf{Requirement} & \textbf{Specification} \\
+\hline
+Installation Time & Complete installation (Python + dependencies) shall complete within 5 minutes on 10 Mbps connection \\
+\hline
+Disk Space & Total installation footprint shall not exceed 200 MB including all dependencies \\
+\hline
+System Requirements & Minimum: Python 3.9+, 4GB RAM, 100MB disk space; Recommended: Python 3.11+, 8GB RAM \\
+\hline
+Package Size & Codebase (excluding dependencies) shall remain under 10 MB \\
+\hline
+Offline Operation & After initial installation, system shall operate without internet connectivity \\
+\hline
+\end{tabular}
+\caption{Deployment Requirements}
+\end{table}
+
+\subsection{Compliance and Standards Requirements}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|p{0.35\textwidth}|p{0.55\textwidth}|}
+\hline
+\textbf{Requirement} & \textbf{Specification} \\
+\hline
+Code Style & Shall conform to PEP 8 Python style guidelines \\
+\hline
+Type Hints & Public interfaces shall use Python type hints for function signatures \\
+\hline
+Version Control & Shall use Git with meaningful commit messages following Conventional Commits \\
+\hline
+Open Source License & Shall use MIT or Apache 2.0 license for public distribution \\
+\hline
+\end{tabular}
+\caption{Compliance Requirements}
+\end{table}
+
+% ============================================================================
+% 3. ANALYSIS - UML DIAGRAMS
+% ============================================================================
+\section{Object-Oriented Analysis and Design}
+
+This section presents the behavioral design of CeraSim using Unified Modeling Language (UML) diagrams. These diagrams capture how objects interact, how processes flow, and how system state evolves over time.
+
+\subsection{Use Case Diagram}
+
+Use case diagrams identify \textbf{actors} (users or external systems) and \textbf{use cases} (functional requirements) they interact with.
+
+\subsubsection{Actors}
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Factory Manager} - Oversees daily operations, monitors production, tracks machine status
+    \item \textbf{Supply Chain Analyst} - Conducts scenario analysis, optimizes inventory, generates reports
+    \item \textbf{Operations Director} - Reviews comparative analytics, makes strategic investment decisions
+    \item \textbf{System Administrator} - Configures system parameters, manages simulation infrastructure
+\end{itemize}
+
+\subsubsection{Use Case Categories}
+
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{Simulation Management} - Run, monitor, configure simulations
+    \item \textbf{Scenario Analysis} - Select, compare, define scenarios
+    \item \textbf{Production Management} - Track batches, monitor machines, manage inventory and orders
+    \item \textbf{Reporting \& Analytics} - View KPIs, generate reports, export results, visualize trends
+    \item \textbf{System Configuration} - Configure products, machines, suppliers, parameters
+\end{enumerate}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{uml_diagrams/usecase.png}
+    \caption{Use Case Diagram - CeraSim System Actors and Use Cases}
+    \label{fig:usecase}
+\end{figure}
+
+\subsection{Activity Diagrams}
+
+Activity diagrams model \textbf{workflows} and \textbf{business processes} using flowchart-like notation.
+
+\subsubsection{Production Process Activity Diagram}
+
+This diagram models the complete tile manufacturing workflow from raw materials to finished goods. It shows:
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Decision Points:} Material availability check, glaze requirement check
+    \item \textbf{Sequential Stages:} Body preparation → forming → glazing (conditional) → firing → finishing
+    \item \textbf{Fork/Join:} Quality classification into Grade A, Grade B, and Rejects
+    \item \textbf{Bottleneck Identification:} Kiln firing highlighted as the constraining resource
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{uml_diagrams/activity_production.png}
+    \caption{Activity Diagram - Tile Production Process}
+    \label{fig:activity_production}
+\end{figure}
+
+\subsubsection{Simulation Execution Activity Diagram}
+
+This diagram illustrates the high-level simulation execution flow:
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Initialization:} Command-line argument parsing, scenario selection, environment setup
+    \item \textbf{Concurrent Processes:} Fork showing parallel SimPy processes (production stages, suppliers, demand, fulfillment)
+    \item \textbf{Iteration:} Day-by-day simulation advancement with progress updates
+    \item \textbf{Post-Processing:} KPI computation, table generation, chart rendering
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{uml_diagrams/activity_simulation.png}
+    \caption{Activity Diagram - Simulation Execution Workflow}
+    \label{fig:activity_simulation}
+\end{figure}
+
+\subsection{Sequence Diagrams}
+
+Sequence diagrams show \textbf{object interactions over time}, emphasizing message passing between objects.
+
+\subsubsection{Production Batch Processing Sequence}
+
+This diagram traces a single ProductionBatch object through the entire production pipeline:
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Lifelines:} SimPy Environment, Factory, ProductionBatch, and production stage machines
+    \item \textbf{Resource Requests:} \texttt{request()} and \texttt{release()} patterns for machine allocation
+    \item \textbf{State Updates:} Timestamp recording at each stage completion
+    \item \textbf{Conditional Flow:} Glazing stage bypassed for unglazed products
+    \item \textbf{Final State:} Batch completion with quality grades, cycle time calculation, metrics logging
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{uml_diagrams/sequence_batch.png}
+    \caption{Sequence Diagram - Production Batch Processing}
+    \label{fig:sequence_batch}
+\end{figure}
+
+\subsubsection{Customer Order Fulfillment Sequence}
+
+This diagram shows the order lifecycle from creation to fulfillment:
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Order Creation:} DemandGenerator creates CustomerOrder and enqueues it
+    \item \textbf{Inventory Check:} Factory queries finished goods inventory
+    \item \textbf{Fulfillment Paths:} Full, partial, or zero fulfillment based on availability
+    \item \textbf{Metrics Recording:} Fill rates, stockout events, lost sales tracking
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{uml_diagrams/sequence_order.png}
+    \caption{Sequence Diagram - Customer Order Fulfillment}
+    \label{fig:sequence_order}
+\end{figure}
+
+\subsection{State Machine Diagrams}
+
+State machine diagrams model \textbf{object lifecycle} showing states and transitions triggered by events.
+
+\subsubsection{ProductionBatch State Machine}
+
+This diagram shows how a ProductionBatch transitions through production states:
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{States:} Created, BodyPrepQueued, BodyPrepInProgress, FormingQueued, FormingInProgress, GlazingQueued, GlazingInProgress, FiringQueued, FiringInProgress, FinishingQueued, QualityInspection, Completed
+    \item \textbf{Transitions:} Triggered by machine availability and stage completion
+    \item \textbf{Conditional Transition:} Glaze path vs. direct-to-firing path
+    \item \textbf{Annotations:} Bottleneck state (FiringQueued) and cycle time notes
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{uml_diagrams/state_batch.png}
+    \caption{State Machine Diagram - ProductionBatch Lifecycle}
+    \label{fig:state_batch}
+\end{figure}
+
+\subsubsection{CustomerOrder State Machine}
+
+This diagram models the order lifecycle:
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{States:} Created, Queued, Processing, FullyFulfilled, PartiallyFulfilled, Unfulfilled, OnTime, Overdue, Closed
+    \item \textbf{Branching:} Three fulfillment outcomes based on inventory availability
+    \item \textbf{Time-Based Transition:} OnTime vs. Overdue based on due date comparison
+    \item \textbf{Metrics Impact:} Annotated effects on fill rate, stockouts, lost sales
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{uml_diagrams/state_order.png}
+    \caption{State Machine Diagram - CustomerOrder Lifecycle}
+    \label{fig:state_order}
+\end{figure}
+
+\subsubsection{Machine Resource State Machine}
+
+This diagram shows machine operational states:
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{States:} Idle, Requested, Processing, BreakdownDuringOperation, BreakdownIdle, UnderRepair
+    \item \textbf{Failure Transitions:} Random failures from Idle or Processing states based on MTBF
+    \item \textbf{Repair Process:} UnderRepair state with repair duration governed by MTTR
+    \item \textbf{Resource Release:} Return to Idle state after processing completion or repair
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{uml_diagrams/state_machine.png}
+    \caption{State Machine Diagram - Machine Resource States}
+    \label{fig:state_machine}
+\end{figure}
+
+\subsection{Object-Oriented Design Principles Demonstrated}
+
+\subsubsection{Encapsulation}
+
+Each class encapsulates related data and behavior:
+\begin{itemize}[leftmargin=*]
+    \item \texttt{ProductionBatch} hides internal state, exposes properties like \texttt{cycle\_time\_hr}, \texttt{saleable\_m2}
+    \item \texttt{CustomerOrder} computes \texttt{is\_complete}, \texttt{is\_overdue}, \texttt{revenue\_eur} from internal fields
+\end{itemize}
+
+\subsubsection{Abstraction}
+
+High-level abstractions hide complexity:
+\begin{itemize}[leftmargin=*]
+    \item Users interact with scenarios ("baseline", "supply\_disruption") without knowing SimPy internals
+    \item \texttt{CeramicFactory.register\_processes()} hides intricate process registration logic
+\end{itemize}
+
+\subsubsection{Modularity}
+
+Clear separation of concerns:
+\begin{itemize}[leftmargin=*]
+    \item \texttt{config.py} - Parameters
+    \item \texttt{models.py} - Data structures
+    \item \texttt{factory.py} - Simulation logic
+    \item \texttt{metrics.py} - Analysis
+    \item \texttt{reports.py} - Presentation
+\end{itemize}
+
+\subsubsection{Composition}
+
+\texttt{CeramicFactory} composes multiple resources:
+\begin{itemize}[leftmargin=*]
+    \item Machines (SimPy Resources)
+    \item Buffers (SimPy Containers)
+    \item Queues (SimPy Stores)
+    \item MetricsCollector instance
+\end{itemize}
+
+\subsubsection{Polymorphism}
+
+\begin{itemize}[leftmargin=*]
+    \item All production stages follow the same pattern: request resource → process → release
+    \item SimPy processes are uniform generator functions, allowing uniform registration
+\end{itemize}
+
+% ============================================================================
+% REFERENCES
+% ============================================================================
+\section{References}
+
+\subsection{Textbooks and Academic Resources}
+
+\begin{enumerate}[leftmargin=*]
+    \item Grady Booch, Robert A. Maksimchuk, Michael W. Engle, et al. (2007). \textit{Object-Oriented Analysis and Design with Applications}, 3rd Edition. Addison-Wesley Professional.
+    
+    \item Martin Fowler (2003). \textit{UML Distilled: A Brief Guide to the Standard Object Modeling Language}, 3rd Edition. Addison-Wesley Professional.
+    
+    \item Averill M. Law (2014). \textit{Simulation Modeling and Analysis}, 5th Edition. McGraw-Hill Education.
+    
+    \item Banks, J., Carson, J.S., Nelson, B.L., Nicol, D.M. (2009). \textit{Discrete-Event System Simulation}, 5th Edition. Pearson.
+\end{enumerate}
+
+\subsection{Software Documentation}
+
+\begin{enumerate}[leftmargin=*]
+    \item SimPy Documentation. \textit{Discrete event simulation for Python}. \\
+    \url{https://simpy.readthedocs.io/}
+    
+    \item Python Software Foundation. \textit{Python 3 Documentation}. \\
+    \url{https://docs.python.org/3/}
+    
+    \item Matplotlib Development Team. \textit{Matplotlib: Visualization with Python}. \\
+    \url{https://matplotlib.org/}
+    
+    \item Rich Library Documentation. \textit{Rich - Python library for rich text in the terminal}. \\
+    \url{https://rich.readthedocs.io/}
+\end{enumerate}
+
+\subsection{UML and Design Resources}
+
+\begin{enumerate}[leftmargin=*]
+    \item Object Management Group (OMG). \textit{Unified Modeling Language Specification}, Version 2.5.1. \\
+    \url{https://www.omg.org/spec/UML/}
+    
+    \item PlantUML. \textit{Open-source tool for creating UML diagrams from plain text}. \\
+    \url{https://plantuml.com/}
+    
+    \item Lucidchart. \textit{UML Diagram Tutorial}. \\
+    \url{https://www.lucidchart.com/pages/uml}
+    
+    \item Visual Paradigm. \textit{UML Unified Modeling Language Guide}. \\
+    \url{https://www.visual-paradigm.com/guide/uml-unified-modeling-language/}
+\end{enumerate}
+
+\subsection{Ceramic Industry Domain Knowledge}
+
+\begin{enumerate}[leftmargin=*]
+    \item Ceramic Industry Magazine. \textit{Tile Manufacturing Process Overview}. \\
+    \url{https://www.ceramicindustry.com/}
+    
+    \item European Ceramic Tile Manufacturers Federation. \textit{Production Process Documentation}. \\
+    \url{https://www.cerame-unie.eu/}
+\end{enumerate}
+
+\subsection{Supply Chain and Operations Management}
+
+\begin{enumerate}[leftmargin=*]
+    \item Chopra, S., Meindl, P. (2015). \textit{Supply Chain Management: Strategy, Planning, and Operation}, 6th Edition. Pearson.
+    
+    \item Hopp, W.J., Spearman, M.L. (2011). \textit{Factory Physics}, 3rd Edition. Waveland Press.
+\end{enumerate}
+
+\subsection{Online Learning Resources}
+
+\begin{enumerate}[leftmargin=*]
+    \item GeeksforGeeks. \textit{Object Oriented Programming in Python}. \\
+    \url{https://www.geeksforgeeks.org/python-oops-concepts/}
+    
+    \item Real Python. \textit{Object-Oriented Programming in Python 3}. \\
+    \url{https://realpython.com/python3-object-oriented-programming/}
+    
+    \item Coursera. \textit{Object-Oriented Design Course by University of Alberta}. \\
+    \url{https://www.coursera.org/learn/object-oriented-design}
+\end{enumerate}
+
+\subsection{Tools Used}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|l|p{0.5\textwidth}|}
+\hline
+\textbf{Tool} & \textbf{Version} & \textbf{Purpose} \\
+\hline
+PlantUML & Latest & UML diagram generation from text specifications \\
+\hline
+\LaTeX & TeXLive 2023+ & Professional document typesetting \\
+\hline
+Python & 3.11 & Application development and simulation implementation \\
+\hline
+SimPy & 4.1.0 & Discrete-event simulation framework \\
+\hline
+Matplotlib & 3.10.8 & Data visualization and charting \\
+\hline
+Git & 2.x & Version control system \\
+\hline
+\end{tabular}
+\caption{Software Tools Used in Project Development and Documentation}
+\end{table}
+
+% ============================================================================
+% APPENDIX
+% ============================================================================
+\section*{Appendix A: Class Diagram}
+
+While not required by the assignment, we include a class diagram showing the static structure of the system for completeness.
+
+\begin{figure}[H]
+    \centering
+    \begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,width=0.95\textwidth,title=CeraSim Class Structure]
+        \textbf{ProductionBatch}
+        \begin{itemize}[leftmargin=*]
+            \item[] \texttt{+ batch\_id: str}
+            \item[] \texttt{+ product: str}
+            \item[] \texttt{+ quantity\_m2: float}
+            \item[] \texttt{+ created\_at: float}
+            \item[] \texttt{+ forming\_done: Optional[float]}
+            \item[] \texttt{+ glazing\_done: Optional[float]}
+            \item[] \texttt{+ firing\_done: Optional[float]}
+            \item[] \texttt{+ finished\_at: Optional[float]}
+            \item[] \texttt{+ grade\_a\_m2: float}
+            \item[] \texttt{+ grade\_b\_m2: float}
+            \item[] \texttt{+ reject\_m2: float}
+            \item[] \texttt{+ cycle\_time\_hr: Optional[float]}
+            \item[] \texttt{+ saleable\_m2: float}
+        \end{itemize}
+        
+        \textbf{CustomerOrder}
+        \begin{itemize}[leftmargin=*]
+            \item[] \texttt{+ order\_id: str}
+            \item[] \texttt{+ customer: str}
+            \item[] \texttt{+ product: str}
+            \item[] \texttt{+ quantity\_m2: float}
+            \item[] \texttt{+ is\_express: bool}
+            \item[] \texttt{+ created\_at: float}
+            \item[] \texttt{+ due\_at: float}
+            \item[] \texttt{+ fulfilled\_qty: float}
+            \item[] \texttt{+ is\_complete: bool}
+            \item[] \texttt{+ is\_overdue: bool}
+            \item[] \texttt{+ revenue\_eur: float}
+        \end{itemize}
+        
+        \textbf{CeramicFactory}
+        \begin{itemize}[leftmargin=*]
+            \item[] \texttt{+ env: simpy.Environment}
+            \item[] \texttt{+ scenario\_id: str}
+            \item[] \texttt{+ machines: Dict[str, simpy.Resource]}
+            \item[] \texttt{+ raw\_materials: Dict[str, simpy.Container]}
+            \item[] \texttt{+ fg\_inventory: Dict[str, simpy.Container]}
+            \item[] \texttt{+ metrics: MetricsCollector}
+            \item[] \texttt{+ register\_processes(): void}
+            \item[] \texttt{+ body\_preparation(): Generator}
+            \item[] \texttt{+ forming\_and\_drying(): Generator}
+            \item[] \texttt{+ surface\_treatment(): Generator}
+            \item[] \texttt{+ kiln\_firing(): Generator}
+            \item[] \texttt{+ finishing(): Generator}
+        \end{itemize}
+    \end{tcolorbox}
+    \caption{Simplified Class Structure (Key Classes Only)}
+\end{figure}
+
+\end{document}
