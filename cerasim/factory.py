@@ -1,20 +1,23 @@
 """
-CeramicFactory — SimPy discrete-event simulation of AzulCer's supply chain.
+CeramicFactory — SimPy discrete-event simulation of SaniCer's supply chain.
 
 Production pipeline (left → right):
 
-  Raw materials (clay, feldspar, silica, kaolin)
+  Raw materials (clay, kaolin, feldspar, silica)
         │
-   [Body Prep Lines]  ──────────────────── powder_buf (Container)
+   [Slip Prep Lines]  ──────────────────── slip_buffer (Container)
         │
-   [Press & Dryer]    ──────────────────── unglazed_store (Store of ProductionBatch)
+   [Pressure Casting] ──────────────────── cast_store (Store of ProductionBatch)
         │
-   [Glaze Line]  ←── glaze raw-mat         ready_to_fire (Store)
-   (RUSTIC skips)
+   [Demolding & Drying (18h)] ──────────── demolded_store (Store)
         │
-   [Roller Kiln] ★ bottleneck ─────────── fired_store (Store)
+   [Fettling]  ──────────────────────────── fettled_store (Store)
         │
-   [Sort & Pack]  ──────────────────────── finished_goods[product] (Container)
+   [Spray Glazing] ←── glaze raw-mat ────── glazed_store (Store)
+        │
+   [Tunnel Kiln (24h)] ★ bottleneck ────── fired_store (Store)
+        │
+   [QC & Packaging]  ───────────────────── finished_goods[product] (Container)
         │
    Customer orders  ←── order_queue (Store)
 """
@@ -28,8 +31,8 @@ from typing import Dict, Tuple
 import simpy
 
 from .config import (
-    BATCH_SIZE_M2, BODY_COMPOSITION, AVG_BODY_KG_M2,
-    CUSTOMERS, DEMAND, FINANCIAL, FG_INITIAL_M2, FG_MAX_M2,
+    BATCH_SIZE_UNITS, BODY_COMPOSITION, AVG_BODY_KG_UNIT,
+    CUSTOMERS, DEMAND, FINANCIAL, FG_INITIAL_UNITS, FG_MAX_UNITS,
     HOURS_PER_DAY, INITIAL_INVENTORY, MACHINES, PRODUCTS,
     QUALITY, SCENARIOS, SUPPLIERS,
 )
@@ -39,7 +42,7 @@ from .models import BreakdownEvent, CustomerOrder, ProductionBatch, SupplierDeli
 
 class CeramicFactory:
     """
-    Full supply-chain model of AzulCer Tile Industries.
+    Full supply-chain model of SaniCer Sanitary Ware Industries.
 
     Usage::
 
@@ -72,18 +75,20 @@ class CeramicFactory:
             )
 
         # ── Inter-stage buffers ───────────────────────────────────────────────
-        self.powder_buf    = simpy.Container(env, capacity=8_000, init=250)
-        # Stores carry ProductionBatch objects so product type travels with the tile
-        self.unglazed_store  = simpy.Store(env)
-        self.ready_to_fire   = simpy.Store(env)
+        self.slip_buffer    = simpy.Container(env, capacity=5_000, init=200)
+        # Stores carry ProductionBatch objects so product type travels with the commode
+        self.cast_store      = simpy.Store(env)
+        self.demolded_store  = simpy.Store(env)
+        self.fettled_store   = simpy.Store(env)
+        self.glazed_store    = simpy.Store(env)
         self.fired_store     = simpy.Store(env)
 
-        # ── Finished-goods warehouse (m²) ─────────────────────────────────────
+        # ── Finished-goods warehouse (units) ──────────────────────────────────
         self.fg: Dict[str, simpy.Container] = {
             prod: simpy.Container(
                 env,
-                capacity=FG_MAX_M2[prod],
-                init=FG_INITIAL_M2[prod],
+                capacity=FG_MAX_UNITS[prod],
+                init=FG_INITIAL_UNITS[prod],
             )
             for prod in PRODUCTS
         }
@@ -149,7 +154,7 @@ class CeramicFactory:
         scores = {}
         for prod, cfg in PRODUCTS.items():
             level  = self.fg[prod].level
-            target = FG_INITIAL_M2[prod] * 2.0
+            target = FG_INITIAL_UNITS[prod] * 2.0
             deficit_bonus = max(0.0, (target - level) / target) * 0.25
             scores[prod]  = cfg["demand_share"] + deficit_bonus
 
@@ -232,18 +237,18 @@ class CeramicFactory:
     # Production stages
     # =========================================================================
 
-    def body_preparation(self):
+    def slip_preparation(self):
         """
-        Stage 1 — Body preparation (mixing + ball-milling + spray drying).
+        Stage 1 — Slip preparation (ball milling + deflocculation + sieving).
 
-        Consumes four raw materials and produces press powder (m² equivalent).
-        One SimPy process instance per body-prep line.
+        Consumes raw materials and produces ceramic slip.
+        One SimPy process instance per slip-prep line.
         """
-        BATCH = BATCH_SIZE_M2
+        BATCH = BATCH_SIZE_UNITS
 
         # Tonnes of each mineral consumed per batch
         mat_per_batch = {
-            mat: BATCH * AVG_BODY_KG_M2 * frac / 1000   # kg → t
+            mat: BATCH * AVG_BODY_KG_UNIT * frac / 1000   # kg → t
             for mat, frac in BODY_COMPOSITION.items()
         }
 
@@ -253,7 +258,7 @@ class CeramicFactory:
                 self.raw_mat[m].level >= qty
                 for m, qty in mat_per_batch.items()
             ):
-                self.metrics.record_stall("body_prep")
+                self.metrics.record_stall("slip_prep")
                 yield self.env.timeout(1.0)   # poll every hour
 
             # ── Consume raw materials ────────────────────────────────────────
@@ -262,59 +267,98 @@ class CeramicFactory:
             for m, qty in mat_per_batch.items():
                 yield self.raw_mat[m].get(qty)
 
-            # ── Process on a body-prep line ──────────────────────────────────
-            with self.machines["body_prep"].request() as req:
+            # ── Process on a slip-prep line ──────────────────────────────────
+            with self.machines["slip_prep"].request() as req:
                 yield req
-                t, _ = self._proc_time("body_prep")
+                t, _ = self._proc_time("slip_prep")
                 yield self.env.timeout(t)
-                self._machine_busy_hr["body_prep"] += t
+                self._machine_busy_hr["slip_prep"] += t
 
-            yield self.powder_buf.put(BATCH)
-            self.metrics.record_stage("body_prep", BATCH)
+            yield self.slip_buffer.put(BATCH)
+            self.metrics.record_stage("slip_prep", BATCH)
 
-    def forming_and_drying(self):
+    def pressure_casting(self):
         """
-        Stage 2 — Pressing & drying.
+        Stage 2 — Pressure casting.
 
-        Gets powder from the buffer, assigns a product type, produces a
+        Gets slip from the buffer, assigns a product type, produces a
         ProductionBatch object that carries the product identity downstream.
-        One process per hydraulic press.
+        One process per casting mold.
         """
-        BATCH = BATCH_SIZE_M2
+        BATCH = BATCH_SIZE_UNITS
         while True:
-            yield self.powder_buf.get(BATCH)
+            yield self.slip_buffer.get(BATCH)
             product = self._choose_product()
 
-            with self.machines["forming"].request() as req:
+            with self.machines["casting"].request() as req:
                 yield req
-                t, _ = self._proc_time("forming")
+                t, _ = self._proc_time("casting")
                 yield self.env.timeout(t)
-                self._machine_busy_hr["forming"] += t
+                self._machine_busy_hr["casting"] += t
 
             batch = ProductionBatch(
                 product      = product,
-                quantity_m2  = BATCH,
+                quantity_units  = BATCH,
                 created_at   = self.env.now,
-                forming_done = self.env.now,
+                casting_done = self.env.now,
             )
-            yield self.unglazed_store.put(batch)
-            self.metrics.record_stage("forming", BATCH)
+            yield self.cast_store.put(batch)
+            self.metrics.record_stage("casting", BATCH)
 
-    def surface_treatment(self):
+    def demolding_and_drying(self):
         """
-        Stage 3 — Glaze application.
-
-        Glazed products (FLOOR-6060, WALL-3045) go through the glaze line.
-        RUSTIC-4545 bypasses it entirely — the loop is still needed so the
-        batch is forwarded to ready_to_fire.
-        One process per glaze line.
+        Stage 3 — Demolding and initial drying (18h).
+        
+        Extract commodes from gypsum molds and air dry for 12-24 hours.
+        This is a time-consuming but essential step for dimensional stability.
         """
         while True:
-            batch = yield self.unglazed_store.get()
+            batch = yield self.cast_store.get()
+            
+            with self.machines["demolding"].request() as req:
+                yield req
+                t, _ = self._proc_time("demolding")
+                yield self.env.timeout(t)
+                self._machine_busy_hr["demolding"] += t
+            
+            batch.demolded_at = self.env.now
+            yield self.demolded_store.put(batch)
+            self.metrics.record_stage("demolding", batch.quantity_units)
+    
+    def fettling(self):
+        """
+        Stage 4 — Fettling and trimming.
+        
+        Remove mold seams, smooth edges, and create water passages.
+        Critical for product quality and functionality.
+        """
+        while True:
+            batch = yield self.demolded_store.get()
+            
+            with self.machines["fettling"].request() as req:
+                yield req
+                t, _ = self._proc_time("fettling")
+                yield self.env.timeout(t)
+                self._machine_busy_hr["fettling"] += t
+            
+            batch.fettled_at = self.env.now
+            yield self.fettled_store.put(batch)
+            self.metrics.record_stage("fettling", batch.quantity_units)
+
+    def spray_glazing(self):
+        """
+        Stage 5 — Spray glazing.
+
+        All commode products require interior and exterior glazing.
+        Applied via spray booths (manual or robotic).
+        One process per glazing booth.
+        """
+        while True:
+            batch = yield self.fettled_store.get()
             cfg   = PRODUCTS[batch.product]
 
             if cfg["needs_glaze"]:
-                glaze_qty = batch.quantity_m2 * cfg["glaze_kg_per_m2"] / 1000  # t
+                glaze_qty = batch.quantity_units * cfg["glaze_kg_per_unit"] / 1000  # t
 
                 # ── Wait for glaze material ──────────────────────────────────
                 while self.raw_mat["glaze"].level < glaze_qty:
@@ -330,18 +374,18 @@ class CeramicFactory:
                     self._machine_busy_hr["glazing"] += t
 
             batch.glazing_done = self.env.now
-            yield self.ready_to_fire.put(batch)
-            self.metrics.record_stage("glazing", batch.quantity_m2)
+            yield self.glazed_store.put(batch)
+            self.metrics.record_stage("glazing", batch.quantity_units)
 
     def kiln_firing(self):
         """
-        Stage 4 — Roller hearth kiln firing.  ★ The production bottleneck.
+        Stage 6 — Tunnel kiln firing (24h cycle).  ★ The production bottleneck.
 
-        One process per kiln.  Breakdowns here have the biggest impact on
-        throughput because this stage has the lowest theoretical capacity.
+        One process per kiln.  24-hour firing cycle makes this the critical constraint.
+        Breakdowns here have the biggest impact on throughput.
         """
         while True:
-            batch = yield self.ready_to_fire.get()
+            batch = yield self.glazed_store.get()
 
             with self.machines["kiln"].request() as req:
                 yield req
@@ -351,7 +395,7 @@ class CeramicFactory:
 
             batch.firing_done = self.env.now
             yield self.fired_store.put(batch)
-            self.metrics.record_stage("kiln", batch.quantity_m2)
+            self.metrics.record_stage("kiln", batch.quantity_units)
 
     def finishing(self):
         """
@@ -371,22 +415,31 @@ class CeramicFactory:
                 self._machine_busy_hr["finishing"] += t
 
             q              = QUALITY
-            batch.grade_a_m2 = batch.quantity_m2 * q["grade_a_rate"]
-            batch.grade_b_m2 = batch.quantity_m2 * q["grade_b_rate"]
-            batch.reject_m2  = batch.quantity_m2 * q["reject_rate"]
+            batch.grade_a_units = int(batch.quantity_units * q["grade_a_rate"])
+            batch.grade_b_units = int(batch.quantity_units * q["grade_b_rate"])
+            batch.reject_units  = int(batch.quantity_units * q["reject_rate"])
+            
+            # Functional testing (leak test, flush test)
+            saleable = batch.saleable_units
+            batch.leak_test_pass = int(saleable * q["leak_test_pass_rate"])
+            batch.flush_test_pass = int(saleable * q["flush_test_pass_rate"])
+            
+            # Only units passing both tests go to FG
+            final_saleable = min(batch.leak_test_pass, batch.flush_test_pass)
+            
             batch.finished_at = self.env.now
 
-            # Add saleable tiles to finished-goods warehouse (capped at capacity)
+            # Add saleable commodes to finished-goods warehouse (capped at capacity)
             fg_store = self.fg[batch.product]
             space    = fg_store.capacity - fg_store.level
-            put_qty  = min(batch.saleable_m2, space)
+            put_qty  = min(final_saleable, space)
             if put_qty > 0:
                 yield fg_store.put(put_qty)
 
             self.metrics.completed_batches.append(batch)
-            self.metrics.record_stage("finishing", batch.quantity_m2)
+            self.metrics.record_stage("finishing", batch.quantity_units)
             self._daily_prod[batch.product] = (
-                self._daily_prod.get(batch.product, 0.0) + put_qty
+                self._daily_prod.get(batch.product, 0) + put_qty
             )
 
     # =========================================================================
@@ -413,19 +466,19 @@ class CeramicFactory:
                 weights=[PRODUCTS[p]["demand_share"] for p in PRODUCTS],
             )[0]
             qty = max(
-                DEMAND["min_order_m2"],
-                random.normalvariate(DEMAND["mean_order_m2"], DEMAND["std_order_m2"]),
+                DEMAND["min_order_units"],
+                random.normalvariate(DEMAND["mean_order_units"], DEMAND["std_order_units"]),
             )
             lead_days  = (DEMAND["express_lead_time_days"] if is_express
                           else DEMAND["std_lead_time_days"])
-            base_price = PRODUCTS[product]["price_eur_m2"]
+            base_price = PRODUCTS[product]["price_eur_unit"]
             unit_price = base_price * (DEMAND["express_premium"] if is_express else 1.0)
 
             order = CustomerOrder(
                 order_id    = f"ORD-{counter:04d}",
                 customer    = random.choice(CUSTOMERS),
                 product     = product,
-                quantity_m2 = round(qty),
+                quantity_units = int(round(qty)),
                 is_express  = is_express,
                 created_at  = self.env.now,
                 due_at      = self.env.now + lead_days * HOURS_PER_DAY,
@@ -447,9 +500,9 @@ class CeramicFactory:
             fg    = self.fg[order.product]
             avail = fg.level
 
-            if avail >= order.quantity_m2:
-                yield fg.get(order.quantity_m2)
-                order.fulfilled_qty = order.quantity_m2
+            if avail >= order.quantity_units:
+                yield fg.get(order.quantity_units)
+                order.fulfilled_qty = order.quantity_units
             elif avail > 0:
                 yield fg.get(avail)
                 order.fulfilled_qty = avail
@@ -459,7 +512,7 @@ class CeramicFactory:
                 self.metrics.stockout_events.append({
                     "time":        self.env.now,
                     "product":     order.product,
-                    "quantity_m2": order.quantity_m2,
+                    "quantity_units": order.quantity_units,
                 })
 
             order.fulfilled_at = self.env.now
@@ -479,15 +532,17 @@ class CeramicFactory:
             self.metrics.daily_snapshots.append({
                 "day":           day,
                 "raw_mat":       {m: self.raw_mat[m].level for m in SUPPLIERS},
-                "powder":        self.powder_buf.level,
+                "slip":          self.slip_buffer.level,
                 "fg":            {p: self.fg[p].level for p in PRODUCTS},
-                "produced_m2":   dict(self._daily_prod),
-                "wip":           (len(self.unglazed_store.items)
-                                  + len(self.ready_to_fire.items)
+                "produced_units": dict(self._daily_prod),
+                "wip":           (len(self.cast_store.items)
+                                  + len(self.demolded_store.items)
+                                  + len(self.fettled_store.items)
+                                  + len(self.glazed_store.items)
                                   + len(self.fired_store.items)),
                 "utilization":   self._current_utilization(),
             })
-            self._daily_prod = {p: 0.0 for p in PRODUCTS}
+            self._daily_prod = {p: 0 for p in PRODUCTS}
 
     def _current_utilization(self) -> Dict[str, float]:
         """Cumulative utilisation fraction for each machine group."""
@@ -516,12 +571,16 @@ class CeramicFactory:
             env.process(self._supplier_delivery(mat))
 
         # Production pipeline — N workers per stage ≈ N machines
-        for _ in range(MACHINES["body_prep"]["count"]):
-            env.process(self.body_preparation())
-        for _ in range(MACHINES["forming"]["count"]):
-            env.process(self.forming_and_drying())
+        for _ in range(MACHINES["slip_prep"]["count"]):
+            env.process(self.slip_preparation())
+        for _ in range(MACHINES["casting"]["count"]):
+            env.process(self.pressure_casting())
+        for _ in range(MACHINES["demolding"]["count"]):
+            env.process(self.demolding_and_drying())
+        for _ in range(MACHINES["fettling"]["count"]):
+            env.process(self.fettling())
         for _ in range(MACHINES["glazing"]["count"]):
-            env.process(self.surface_treatment())
+            env.process(self.spray_glazing())
 
         kiln_count = MACHINES["kiln"]["count"] + self.scen["extra_kilns"]
         for _ in range(kiln_count):

@@ -49,7 +49,7 @@
     
     {\Huge \textbf{Object-Oriented Analysis and Design}}\\[0.5cm]
     {\Large \textbf{CeraSim}}\\[0.3cm]
-    {\large AzulCer Tile Industries Supply Chain Simulator}\\[2cm]
+    {\large SaniCer Sanitary Ware Industries Supply Chain Simulator}\\[2cm]
     
     \begin{tcolorbox}[colback=primaryblue!5!white,colframe=primaryblue!75!black,width=0.8\textwidth]
         \centering
@@ -87,13 +87,13 @@
 
 \subsection{Overview}
 
-\textbf{CeraSim} is a comprehensive discrete-event simulation system designed for \textbf{AzulCer Tile Industries}, a Portuguese ceramic tile manufacturer based in Aveiro, Portugal. The application models the complete supply chain operations of a tile manufacturing facility, from raw material procurement through production stages to customer order fulfillment.
+\textbf{CeraSim} is a comprehensive discrete-event simulation system designed for \textbf{SaniCer Sanitary Ware Industries}, a Portuguese sanitary ceramics manufacturer based in Aveiro, Portugal. The application models the complete supply chain operations of a commode (toilet) manufacturing facility, from raw material procurement through production stages to customer order fulfillment.
 
-Founded in 1987, AzulCer employs 240 workers and produces three primary product lines: premium glazed floor tiles (60×60 cm), glazed wall tiles (30×45 cm), and rustic outdoor tiles (45×45 cm). The factory operates continuously, processing raw materials (clay, feldspar, silica, and kaolin) through multiple production stages to produce high-quality ceramic tiles.
+Founded in 1987, SaniCer employs 240 workers and produces three primary product lines: one-piece standard commodes, two-piece economy commodes, and wall-hung premium commodes. The factory operates continuously, processing raw materials (clay, feldspar, silica, and kaolin) through multiple production stages including slip casting, demolding, fettling, glazing, and tunnel kiln firing to produce high-quality sanitary ware.
 
 \subsection{Business Problem and Motivation}
 
-Modern manufacturing operations face complex challenges in supply chain management, capacity planning, and operational optimization. AzulCer management identified several critical business questions:
+Modern manufacturing operations face complex challenges in supply chain management, capacity planning, and operational optimization. SaniCer management identified several critical business questions:
 
 \begin{itemize}[leftmargin=*]
     \item \textbf{Bottleneck Identification:} Which production stage limits overall throughput?
@@ -114,11 +114,11 @@ The application is built using \textbf{Object-Oriented Software Development (OOS
 \subsubsection{Key Objects and Their Responsibilities}
 
 \begin{enumerate}[leftmargin=*]
-    \item \textbf{ProductionBatch} - Represents a 250 m² tile batch flowing through the production pipeline
+    \item \textbf{ProductionBatch} - Represents a 50-unit commode batch flowing through the production pipeline
     \begin{itemize}
         \item Encapsulates batch identity, product type, quantity, and quality grades
-        \item Tracks stage completion timestamps for cycle time analysis
-        \item Maintains quality outcomes (Grade A, Grade B, rejects)
+        \item Tracks stage completion timestamps (casting, demolding, fettling, glazing, firing, finishing)
+        \item Maintains quality outcomes and functional test results (leak test, flush test)
     \end{itemize}
     
     \item \textbf{CustomerOrder} - Models purchase orders from distributors and retailers
@@ -170,7 +170,7 @@ The simulation operates through \textbf{message passing} and \textbf{shared reso
     \item \textbf{SimPy Resources} model capacity-constrained machines with queueing
 \end{itemize}
 
-This design elegantly maps manufacturing reality to software objects—each tile batch is a genuine object with identity and state, machines are resources with capacity constraints, and the factory orchestrates their interactions according to production routing logic.
+This design elegantly maps manufacturing reality to software objects—each commode batch is a genuine object with identity and state, machines are resources with capacity constraints, and the factory orchestrates their interactions according to production routing logic.
 
 \subsection{Application Features}
 
@@ -207,7 +207,7 @@ CeraSim includes four pre-configured scenarios that model realistic business sit
     
     \item \textbf{Demand Surge} - 30\% increase in customer orders, representing seasonal peaks or successful marketing campaigns
     
-    \item \textbf{Optimised} - Capital investment scenario with a third kiln (+€2.4M CAPEX) and 50\% increased safety stock levels
+    \item \textbf{Optimised} - Capital investment scenario with a second tunnel kiln (+€3.5M CAPEX) and 50\% increased safety stock levels
 \end{enumerate}
 
 Each scenario produces detailed KPIs including production volume, revenue, fill rates, cycle times, inventory levels, machine utilization, breakdown frequencies, and net profit.
@@ -237,10 +237,10 @@ Each scenario produces detailed KPIs including production volume, revenue, fill 
 The simulation provides actionable insights such as:
 
 \begin{itemize}[leftmargin=*]
-    \item \textbf{Bottleneck:} Kiln firing (4h/batch, 2 kilns) limits throughput to 12 batches/day (3,000 m²/day)
-    \item \textbf{Disruption Impact:} 35-day kaolin strike causes ~15,000 m² production loss (€200k+ revenue impact)
-    \item \textbf{ROI:} Third kiln increases output by 20\%, with 2.3-year simple payback
-    \item \textbf{Service Level:} Baseline 93\% fill rate drops to 78\% during demand surges without inventory buffers
+    \item \textbf{Bottleneck:} Tunnel kiln firing (24h/batch, 1 kiln) limits throughput to 1 batch/day (50 units/day)
+    \item \textbf{Disruption Impact:} 35-day kaolin strike causes significant production loss affecting customer orders
+    \item \textbf{ROI:} Second tunnel kiln increases output by 2×, with 1.2-year simple payback
+    \item \textbf{Service Level:} Baseline 35\% fill rate improves to 71\% with second kiln investment
 \end{itemize}
 
 % ============================================================================
@@ -499,19 +499,19 @@ Activity diagrams model \textbf{workflows} and \textbf{business processes} using
 
 \subsubsection{Production Process Activity Diagram}
 
-This diagram models the complete tile manufacturing workflow from raw materials to finished goods. It shows:
+This diagram models the complete commode manufacturing workflow from raw materials to finished goods. It shows:
 
 \begin{itemize}[leftmargin=*]
-    \item \textbf{Decision Points:} Material availability check, glaze requirement check
-    \item \textbf{Sequential Stages:} Body preparation → forming → glazing (conditional) → firing → finishing
-    \item \textbf{Fork/Join:} Quality classification into Grade A, Grade B, and Rejects
-    \item \textbf{Bottleneck Identification:} Kiln firing highlighted as the constraining resource
+    \item \textbf{Decision Points:} Material availability check, functional test pass/fail
+    \item \textbf{Sequential Stages:} Slip preparation → pressure casting → demolding → fettling → glazing → tunnel kiln firing → finishing with functional testing
+    \item \textbf{Fork/Join:} Quality classification into Pass, Rejects after functional testing
+    \item \textbf{Bottleneck Identification:} Tunnel kiln firing (24h cycle) highlighted as the severe constraining resource
 \end{itemize}
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.95\textwidth]{uml_diagrams/activity_production.png}
-    \caption{Activity Diagram - Tile Production Process}
+    \caption{Activity Diagram - Commode Production Process}
     \label{fig:activity_production}
 \end{figure}
 
@@ -583,10 +583,10 @@ State machine diagrams model \textbf{object lifecycle} showing states and transi
 This diagram shows how a ProductionBatch transitions through production states:
 
 \begin{itemize}[leftmargin=*]
-    \item \textbf{States:} Created, BodyPrepQueued, BodyPrepInProgress, FormingQueued, FormingInProgress, GlazingQueued, GlazingInProgress, FiringQueued, FiringInProgress, FinishingQueued, QualityInspection, Completed
+    \item \textbf{States:} Created, SlipPrepQueued, SlipPrepInProgress, CastingQueued, CastingInProgress, DemoldingQueued, DemoldingInProgress, FettlingQueued, FettlingInProgress, GlazingQueued, GlazingInProgress, FiringQueued, FiringInProgress, FinishingQueued, FunctionalTesting, Completed
     \item \textbf{Transitions:} Triggered by machine availability and stage completion
-    \item \textbf{Conditional Transition:} Glaze path vs. direct-to-firing path
-    \item \textbf{Annotations:} Bottleneck state (FiringQueued) and cycle time notes
+    \item \textbf{Testing Transition:} Leak test and flush test determine pass/fail
+    \item \textbf{Annotations:} Bottleneck state (FiringQueued - 24h cycle) and cycle time notes
 \end{itemize}
 
 \begin{figure}[H]
@@ -638,7 +638,7 @@ This diagram shows machine operational states:
 
 Each class encapsulates related data and behavior:
 \begin{itemize}[leftmargin=*]
-    \item \texttt{ProductionBatch} hides internal state, exposes properties like \texttt{cycle\_time\_hr}, \texttt{saleable\_m2}
+    \item \texttt{ProductionBatch} hides internal state, exposes properties like \texttt{cycle\_time\_hr}, \texttt{saleable\_units}, \texttt{leak\_test\_pass}, \texttt{flush\_test\_pass}
     \item \texttt{CustomerOrder} computes \texttt{is\_complete}, \texttt{is\_overdue}, \texttt{revenue\_eur} from internal fields
 \end{itemize}
 

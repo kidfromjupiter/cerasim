@@ -10,65 +10,96 @@ title ProductionBatch State Machine Diagram
 state Created {
   Created : batch_id assigned
   Created : product type set
-  Created : quantity_m² = 250
+  Created : quantity_units = 50
   Created : created_at timestamp
 }
 
-Created --> BodyPrepQueued : enters powder\nbuffer queue
+Created --> SlipPrepQueued : enters slip\nbuffer queue
 
-state BodyPrepQueued {
-  BodyPrepQueued : waiting for body prep line
+state SlipPrepQueued {
+  SlipPrepQueued : waiting for slip prep line
 }
 
-BodyPrepQueued --> BodyPrepInProgress : machine available
+SlipPrepQueued --> SlipPrepInProgress : machine available
 
-state BodyPrepInProgress {
-  BodyPrepInProgress : mixing raw materials
-  BodyPrepInProgress : ball milling
-  BodyPrepInProgress : spray drying
+state SlipPrepInProgress {
+  SlipPrepInProgress : mixing raw materials
+  SlipPrepInProgress : ball milling
+  SlipPrepInProgress : adding water for slip
 }
 
-BodyPrepInProgress --> FormingQueued : body_prep complete\nset forming_done timestamp
+SlipPrepInProgress --> CastingQueued : slip prep complete\nset casting_done timestamp
 
-state FormingQueued {
-  FormingQueued : in unglazed_store
-  FormingQueued : waiting for press
+state CastingQueued {
+  CastingQueued : in slip_buffer
+  CastingQueued : waiting for casting station
 }
 
-FormingQueued --> FormingInProgress : press available
+CastingQueued --> CastingInProgress : station available
 
-state FormingInProgress {
-  FormingInProgress : isostatic pressing
-  FormingInProgress : roller drying
+state CastingInProgress {
+  CastingInProgress : pouring slip into gypsum molds
+  CastingInProgress : water absorption
+  CastingInProgress : duration: ~6 hours
 }
 
-FormingInProgress --> GlazingQueued : [needs_glaze == True]
-FormingInProgress --> FiringQueued : [needs_glaze == False]
+CastingInProgress --> DemoldingQueued : casting complete\nset casting_done timestamp
+
+state DemoldingQueued {
+  DemoldingQueued : in cast_store
+  DemoldingQueued : waiting for demolding
+}
+
+DemoldingQueued --> DemoldingInProgress : station available
+
+state DemoldingInProgress {
+  DemoldingInProgress : extracting from molds
+  DemoldingInProgress : air drying
+  DemoldingInProgress : duration: ~18 hours
+}
+
+DemoldingInProgress --> FettlingQueued : set demolded_at\ntimestamp
+
+state FettlingQueued {
+  FettlingQueued : in demolded_store
+  FettlingQueued : waiting for fettling
+}
+
+FettlingQueued --> FettlingInProgress : station available
+
+state FettlingInProgress {
+  FettlingInProgress : removing mold seams
+  FettlingInProgress : creating water passages
+  FettlingInProgress : surface smoothing
+}
+
+FettlingInProgress --> GlazingQueued : set fettled_at\ntimestamp
 
 state GlazingQueued {
+  GlazingQueued : in fettled_store
   GlazingQueued : waiting for glazing line
 }
 
 GlazingQueued --> GlazingInProgress : line available
 
 state GlazingInProgress {
-  GlazingInProgress : applying glaze
-  GlazingInProgress : digital printing
+  GlazingInProgress : applying white glaze
+  GlazingInProgress : coverage inspection
 }
 
 GlazingInProgress --> FiringQueued : set glazing_done\ntimestamp
 
 state FiringQueued {
-  FiringQueued : in ready_to_fire store
-  FiringQueued : waiting for kiln
-  FiringQueued : [BOTTLENECK]
+  FiringQueued : in glazed_store
+  FiringQueued : waiting for tunnel kiln
+  FiringQueued : [SEVERE BOTTLENECK!!]
 }
 
 FiringQueued --> FiringInProgress : kiln available
 
 state FiringInProgress {
-  FiringInProgress : firing at 1150-1200°C
-  FiringInProgress : duration: ~4 hours
+  FiringInProgress : firing at 1200-1250°C
+  FiringInProgress : duration: ~24 HOURS!!
   FiringInProgress : [CRITICAL STAGE]
 }
 
@@ -79,18 +110,19 @@ state FinishingQueued {
   FinishingQueued : waiting for finishing line
 }
 
-FinishingQueued --> QualityInspection : line available
+FinishingQueued --> FunctionalTesting : line available
 
-state QualityInspection {
-  QualityInspection : visual & dimensional check
-  QualityInspection : classify tiles
+state FunctionalTesting {
+  FunctionalTesting : visual inspection
+  FunctionalTesting : leak test (98% pass rate)
+  FunctionalTesting : flush test (97% pass rate)
 }
 
-QualityInspection --> Completed : set grade_a_m²,\ngrade_b_m², reject_m²\nset finished_at timestamp
+FunctionalTesting --> Completed : set leak_test_pass,\nflush_test_pass\nset finished_at timestamp
 
 state Completed {
   Completed : cycle_time_hr calculated
-  Completed : saleable_m² = grade_a + grade_b
+  Completed : saleable_units counted
   Completed : added to FG inventory
   Completed : metrics recorded
 }
@@ -98,15 +130,16 @@ state Completed {
 Completed --> [*]
 
 note right of FiringQueued
-  Kiln firing is the system bottleneck.
-  Batches typically queue longest here.
-  Only 2 kilns × 24h/4h = 12 batches/day max.
+  Tunnel kiln is THE SEVERE bottleneck.
+  Batches queue longest here.
+  Only 1 kiln × 24h = 1 batch/day max!
+  This is 6× slower than tile kilns.
 end note
 
 note right of Completed
-  Typical cycle time: 12-20 hours
+  Typical cycle time: 40-60 hours
   depending on queuing delays and
-  machine breakdowns.
+  the 24h tunnel kiln cycle.
 end note
 
 @enduml

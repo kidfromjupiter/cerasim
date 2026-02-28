@@ -74,16 +74,16 @@ def print_kpi_table(scenario_id: str, kpis: dict) -> None:
 
     # Production
     row("── Production ──────────────────", "", "")
-    row("  Total output (m²)",
-        f"{kpis['total_production_m2']:>12,.0f}",
-        f"avg {kpis['avg_daily_m2']:,.0f} m²/day")
-    row("  Grade A (m²)",
-        f"{kpis['grade_a_m2']:>12,.0f}",
-        f"{kpis['grade_a_m2']/max(1,kpis['total_production_m2'])*100:.1f}% of total")
-    row("  Grade B / Seconds (m²)",
-        f"{kpis['grade_b_m2']:>12,.0f}", "")
-    row("  Scrap (m²)",
-        f"{kpis['reject_m2']:>12,.0f}", "")
+    row("  Total output (units)",
+        f"{kpis['total_production_units']:>12,.0f}",
+        f"avg {kpis['avg_daily_m2']:,.0f} units/day")
+    row("  Grade A (units)",
+        f"{kpis['grade_a_units']:>12,.0f}",
+        f"{kpis['grade_a_units']/max(1,kpis['total_production_units'])*100:.1f}% of total")
+    row("  Grade B / Seconds (units)",
+        f"{kpis['grade_b_units']:>12,.0f}", "")
+    row("  Scrap (units)",
+        f"{kpis['reject_units']:>12,.0f}", "")
     row("  Avg batch cycle time",
         f"{kpis['avg_cycle_time_hr']:>10.1f} h", "")
     row("  Total batches completed",
@@ -93,7 +93,7 @@ def print_kpi_table(scenario_id: str, kpis: dict) -> None:
     row("── Orders ──────────────────────", "", "")
     row("  Orders received",
         f"{kpis['total_orders']:>12,d}", "")
-    row("  Total demand (m²)",
+    row("  Total demand (units)",
         f"{kpis['total_ordered_m2']:>12,.0f}", "")
     row("  Quantity fill rate",
         pct_style(kpis['fill_rate_pct']), "")
@@ -119,7 +119,7 @@ def print_kpi_table(scenario_id: str, kpis: dict) -> None:
     row("  Kaolin disruption hrs",
         f"{kpis['disruption_hours']:>10.1f} h", "")
     row("  Body-prep stall hrs",
-        f"{kpis['body_prep_stall_hrs']:>12,d}", "")
+        f"{kpis['slip_prep_stall_hrs']:>12,d}", "")
     row("  Glaze-line stall hrs",
         f"{kpis['glaze_stall_hrs']:>12,d}", "")
 
@@ -186,8 +186,8 @@ def print_comparison_table(results: Dict[str, Tuple]) -> None:
     kpis_list = [results[s][1] for s in scen_ids]
 
     rows = [
-        ("Output (m²)",          "total_production_m2",  ","),
-        ("Avg daily output (m²)", "avg_daily_m2",          ","),
+        ("Output (units)",          "total_production_m2",  ","),
+        ("Avg daily output (units)", "avg_daily_m2",          ","),
         ("Fill rate",            "fill_rate_pct",         "pct"),
         ("On-time delivery",     "otd_rate_pct",          "pct"),
         ("Avg lead time (days)", "avg_lead_time_days",    "f2"),
@@ -279,7 +279,7 @@ def plot_scenario_dashboard(factory, kpis: dict, scenario_id: str, out_dir: str)
         ax.bar(days, vals, bottom=bottom,
                color=PRODUCT_COLORS[prod], label=prod, alpha=0.85, width=0.9)
         bottom += vals
-    ax.set_ylabel("m² / day", fontsize=8)
+    ax.set_ylabel("units / day", fontsize=8)
     ax.set_xlabel("Day", fontsize=8)
     ax.legend(fontsize=6, loc="lower right")
     _style_ax(ax, "Daily Production by Product")
@@ -290,7 +290,7 @@ def plot_scenario_dashboard(factory, kpis: dict, scenario_id: str, out_dir: str)
         vals = [s["fg"][prod] for s in snaps]
         ax.plot(days, vals, color=PRODUCT_COLORS[prod],
                 label=prod, linewidth=1.4)
-    ax.set_ylabel("Stock (m²)", fontsize=8)
+    ax.set_ylabel("Stock (units)", fontsize=8)
     ax.set_xlabel("Day", fontsize=8)
     ax.legend(fontsize=6)
     _style_ax(ax, "Finished-Goods Warehouse")
@@ -315,7 +315,7 @@ def plot_scenario_dashboard(factory, kpis: dict, scenario_id: str, out_dir: str)
     ax = axes[1][1]
     orders = factory.metrics.orders
     if orders:
-        # Bin fulfilled m² and ordered m² by day
+        # Bin fulfilled units and ordered units by day
         daily_ord  = np.zeros(SIM_DAYS + 1)
         daily_ful  = np.zeros(SIM_DAYS + 1)
         for o in orders:
@@ -354,7 +354,7 @@ def plot_scenario_dashboard(factory, kpis: dict, scenario_id: str, out_dir: str)
         ])
         # Approximate cumulative cost (raw mat only — for clarity)
         cum_cost = np.cumsum([
-            b.quantity_m2 * 2.40   # approx €/m² raw material (see config comments)
+            b.quantity_m2 * 2.40   # approx €/units raw material (see config comments)
             for b in sorted_b
         ])
         ax.fill_between(times, cum_rev / 1e6, cum_cost / 1e6,
@@ -384,7 +384,7 @@ def plot_comparison_chart(results: Dict[str, Tuple], out_dir: str) -> str:
     colors    = [SCENARIO_COLORS[s] for s in scen_ids]
 
     metrics_to_compare = [
-        ("avg_daily_m2",        "Avg Daily Production\n(m²/day)",     None),
+        ("avg_daily_m2",        "Avg Daily Production\n(units/day)",     None),
         ("fill_rate_pct",       "Order Fill Rate\n(%)",               95),
         ("otd_rate_pct",        "On-Time Delivery\n(%)",              95),
         ("total_breakdowns",    "Machine\nBreakdowns",                None),

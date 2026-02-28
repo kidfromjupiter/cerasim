@@ -12,23 +12,29 @@ def _short_id() -> str:
 
 @dataclass
 class ProductionBatch:
-    """Tracks a single 250 m² tile batch from raw material through to packaging."""
+    """Tracks a single batch of commodes from raw material through to packaging."""
 
     batch_id:     str   = field(default_factory=_short_id)
     product:      str   = ""
-    quantity_m2:  float = 0.0
+    quantity_units: int = 0
     created_at:   float = 0.0          # simulation time (hours)
 
     # Stage-completion timestamps (set as batch moves through pipeline)
-    forming_done:  Optional[float] = None
+    casting_done:  Optional[float] = None
+    demolded_at:   Optional[float] = None
+    fettled_at:    Optional[float] = None
     glazing_done:  Optional[float] = None
     firing_done:   Optional[float] = None
     finished_at:   Optional[float] = None
 
     # Quality outcomes (set in the finishing stage)
-    grade_a_m2:  float = 0.0
-    grade_b_m2:  float = 0.0
-    reject_m2:   float = 0.0
+    grade_a_units:  int = 0
+    grade_b_units:  int = 0
+    reject_units:   int = 0
+    
+    # Functional testing results
+    leak_test_pass:  int = 0
+    flush_test_pass: int = 0
 
     @property
     def cycle_time_hr(self) -> Optional[float]:
@@ -38,30 +44,30 @@ class ProductionBatch:
         return None
 
     @property
-    def saleable_m2(self) -> float:
-        return self.grade_a_m2 + self.grade_b_m2
+    def saleable_units(self) -> int:
+        return self.grade_a_units + self.grade_b_units
 
 
 @dataclass
 class CustomerOrder:
-    """A purchase order from a customer."""
+    """A purchase order for commodes from a customer."""
 
     order_id:     str   = field(default_factory=lambda: f"ORD-{_short_id()}")
     customer:     str   = ""
     product:      str   = ""
-    quantity_m2:  float = 0.0
+    quantity_units: int = 0
     is_express:   bool  = False
     created_at:   float = 0.0
     due_at:       float = 0.0
-    unit_price:   float = 0.0          # €/m²
+    unit_price:   float = 0.0          # €/unit
 
     # Filled in during / after fulfilment
-    fulfilled_qty: float          = 0.0
+    fulfilled_qty: int            = 0
     fulfilled_at:  Optional[float] = None
 
     @property
     def is_complete(self) -> bool:
-        return self.fulfilled_qty >= self.quantity_m2 * 0.999
+        return self.fulfilled_qty >= self.quantity_units
 
     @property
     def is_overdue(self) -> bool:
@@ -73,7 +79,7 @@ class CustomerOrder:
 
     @property
     def fill_fraction(self) -> float:
-        return min(1.0, self.fulfilled_qty / self.quantity_m2) if self.quantity_m2 > 0 else 0.0
+        return min(1.0, self.fulfilled_qty / self.quantity_units) if self.quantity_units > 0 else 0.0
 
 
 @dataclass

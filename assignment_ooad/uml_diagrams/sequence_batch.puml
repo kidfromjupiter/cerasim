@@ -8,68 +8,90 @@ title Production Batch Processing Sequence Diagram
 actor "SimPy\nEnvironment" as Env
 participant "Factory" as Factory
 participant "ProductionBatch" as Batch
-participant "BodyPrepLine" as BodyPrep
-participant "FormingPress" as Forming
+participant "SlipPrepLine" as SlipPrep
+participant "CastingStation" as Casting
+participant "DemoldingStation" as Demolding
+participant "FettlingStation" as Fettling
 participant "GlazingLine" as Glazing
-participant "Kiln" as Kiln
+participant "TunnelKiln" as Kiln
 participant "FinishingLine" as Finishing
 participant "MetricsCollector" as Metrics
 participant "FG Inventory" as FG
 
-Env -> Factory: trigger body_preparation()
+Env -> Factory: trigger slip_preparation()
 activate Factory
 
-Factory -> Batch: create(batch_id, product, 250 m²)
+Factory -> Batch: create(batch_id, product, 50 units)
 activate Batch
 Batch --> Factory: batch object
 
 Factory -> Factory: consume raw materials\n(clay, feldspar, silica, kaolin)
 
-Factory -> BodyPrep: request()
-activate BodyPrep
-BodyPrep --> Factory: granted
+Factory -> SlipPrep: request()
+activate SlipPrep
+SlipPrep --> Factory: granted
 
-Factory -> Factory: process for 3.5h\n(mixing, milling, drying)
+Factory -> Factory: process for 3.5h\n(mixing, milling, add water)
 
-Factory -> Batch: set forming_done timestamp
-Factory -> BodyPrep: release()
-deactivate BodyPrep
+Factory -> Batch: set casting_done timestamp
+Factory -> SlipPrep: release()
+deactivate SlipPrep
 
-Factory -> Factory: put batch in powder_buffer
+Factory -> Factory: put batch in slip_buffer
 
-Factory -> Forming: request()
-activate Forming
-Forming --> Factory: granted
+Factory -> Casting: request()
+activate Casting
+Casting --> Factory: granted
 
-Factory -> Factory: press & dry for 1.8h
+Factory -> Factory: pour slip into molds\nfor 6 hours
 
-Factory -> Batch: set forming_done timestamp
-Factory -> Forming: release()
-deactivate Forming
+Factory -> Batch: set casting_done timestamp
+Factory -> Casting: release()
+deactivate Casting
 
-Factory -> Factory: put batch in unglazed_store
+Factory -> Factory: put batch in cast_store
 
-alt Product Needs Glaze
-    Factory -> Glazing: request()
-    activate Glazing
-    Glazing --> Factory: granted
-    
-    Factory -> Factory: apply glaze for 0.35h
-    Factory -> Batch: set glazing_done timestamp
-    Factory -> Glazing: release()
-    deactivate Glazing
-else Unglazed Product
-    Factory -> Factory: skip glazing
-end
+Factory -> Demolding: request()
+activate Demolding
+Demolding --> Factory: granted
 
-Factory -> Factory: put batch in ready_to_fire
+Factory -> Factory: extract from molds\nair dry for 18 hours
+
+Factory -> Batch: set demolded_at timestamp
+Factory -> Demolding: release()
+deactivate Demolding
+
+Factory -> Factory: put batch in demolded_store
+
+Factory -> Fettling: request()
+activate Fettling
+Fettling --> Factory: granted
+
+Factory -> Factory: remove seams,\ncreate passages (2.5h)
+
+Factory -> Batch: set fettled_at timestamp
+Factory -> Fettling: release()
+deactivate Fettling
+
+Factory -> Factory: put batch in fettled_store
+
+Factory -> Glazing: request()
+activate Glazing
+Glazing --> Factory: granted
+
+Factory -> Factory: apply white glaze for 0.4h
+Factory -> Batch: set glazing_done timestamp
+Factory -> Glazing: release()
+deactivate Glazing
+
+Factory -> Factory: put batch in glazed_store
 
 Factory -> Kiln: request()
 activate Kiln
-note right: Kiln is the bottleneck\n(4h per batch, 2 kilns)
+note right: Tunnel Kiln is SEVERE bottleneck\n(24h per batch, only 1 kiln!)
 Kiln --> Factory: granted
 
-Factory -> Factory: fire at 1150-1200°C\nfor 4 hours
+Factory -> Factory: fire at 1200-1250°C\nfor 24 hours!!
 
 Factory -> Batch: set firing_done timestamp
 Factory -> Kiln: release()
@@ -81,9 +103,10 @@ Factory -> Finishing: request()
 activate Finishing
 Finishing --> Factory: granted
 
-Factory -> Factory: inspect quality\ncut, calibrate, package (0.6h)
+Factory -> Factory: visual inspect,\nfunctional testing (1.2h)
 
-Factory -> Batch: classify output\n(Grade A, Grade B, Rejects)
+Factory -> Batch: leak_test_pass = 98% probability
+Factory -> Batch: flush_test_pass = 97% probability
 
 Factory -> Batch: set finished_at timestamp
 Batch -> Batch: calculate cycle_time_hr
@@ -91,7 +114,7 @@ Batch -> Batch: calculate cycle_time_hr
 Factory -> Finishing: release()
 deactivate Finishing
 
-Factory -> FG: add saleable_m² to inventory[product]
+Factory -> FG: add saleable_units to inventory[product]
 activate FG
 FG --> Factory: updated level
 

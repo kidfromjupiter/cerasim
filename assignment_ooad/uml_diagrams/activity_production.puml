@@ -5,7 +5,7 @@ skinparam activityBorderColor #2E7D32
 skinparam activityStartColor #4CAF50
 skinparam activityEndColor #C62828
 
-title Production Process Activity Diagram - Tile Manufacturing
+title Production Process Activity Diagram - Commode Manufacturing
 
 start
 
@@ -15,57 +15,72 @@ if (Sufficient raw materials?) then (yes)
   :Create Production Batch;
   :Assign Batch ID;
   
-  partition "Body Preparation Stage" {
-    :Queue for Body Preparation Line;
+  partition "Slip Preparation Stage" {
+    :Queue for Slip Preparation Line;
     :Mix Raw Materials\n(Clay, Feldspar, Silica, Kaolin);
     :Ball Milling;
-    :Spray Drying;
-    :Store Powder in Buffer;
+    :Add Water for Slip;
+    :Store Slip in Buffer;
   }
   
-  partition "Forming & Drying Stage" {
-    :Queue for Hydraulic Press;
-    :Press Tiles (250 m² batch);
-    :Dry in Roller Dryer;
-    :Store Unglazed Tiles;
+  partition "Pressure Casting Stage" {
+    :Queue for Casting Station;
+    :Pour Slip into Gypsum Molds;
+    :Wait for Absorption (50 units/batch);
+    :Store Cast Commodes;
   }
   
-  if (Product requires glaze?) then (yes)
-    partition "Surface Treatment Stage" {
-      :Queue for Glazing Line;
-      :Apply Glaze Layer;
-      :Digital Inkjet Printing;
-      :Store Ready-to-Fire Tiles;
-    }
-  else (no)
-    :Move to Ready-to-Fire Store;
-  endif
-  
-  partition "Kiln Firing Stage" {
-    :Queue for Kiln\n(Bottleneck Station);
-    :Load into Roller Hearth Kiln;
-    :Fire at 1150-1200°C\n(~4 hours);
-    :Cool Down;
-    :Store Fired Tiles;
+  partition "Demolding & Drying Stage" {
+    :Queue for Demolding Station;
+    :Extract from Molds;
+    :Air Dry (18 hours);
+    :Store Demolded Commodes;
   }
   
-  partition "Finishing Stage" {
-    :Quality Inspection;
+  partition "Fettling Stage" {
+    :Queue for Fettling Station;
+    :Remove Mold Seams;
+    :Create Water Passages;
+    :Smooth Surface;
+    :Store Fettled Commodes;
+  }
+  
+  partition "Spray Glazing Stage" {
+    :Queue for Glazing Line;
+    :Apply White Glaze Layer;
+    :Inspect Glaze Coverage;
+    :Store Glazed Commodes;
+  }
+  
+  partition "Tunnel Kiln Firing Stage" {
+    :Queue for Tunnel Kiln\n(SEVERE BOTTLENECK);
+    :Load onto Kiln Car;
+    :Fire at 1200-1250°C\n(~24 hours!!);
+    :Cool Down in Tunnel;
+    :Store Fired Commodes;
+  }
+  
+  partition "Finishing & Testing Stage" {
+    :Visual Inspection;
+    :Apply Markings;
     
-    fork
-      :Grade A Tiles;
-    fork again
-      :Grade B Tiles;
-    fork again
-      :Reject Tiles;
-    end fork
+    :Functional Testing;
     
-    :Cutting & Calibration;
+    if (Leak test passed?) then (yes)
+      if (Flush test passed?) then (yes)
+        :Pass - Ready for Inventory;
+      else (no)
+        :Reject - Flush Failure;
+      endif
+    else (no)
+      :Reject - Leak Failure;
+    endif
+    
     :Packaging;
     :Update Finished Goods Inventory;
   }
   
-  :Record Batch Metrics\n(Cycle Time, Yield, Quality);
+  :Record Batch Metrics\n(Cycle Time, Yield, Quality, Test Results);
   
   stop
   

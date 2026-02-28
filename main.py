@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-CeraSim — AzulCer Tile Industries Supply Chain Simulator
-=========================================================
+CeraSim — SaniCer Sanitary Ware Industries Supply Chain Simulator
+==================================================================
 
 Run all four scenarios (Baseline / Supply Disruption / Demand Surge / Optimised),
 print per-scenario KPI tables and a cross-scenario comparison, then save
@@ -79,7 +79,7 @@ def run_scenario(
 # ─────────────────────────────────────────────────────────────────────────────
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="AzulCer Tile Industries — Supply Chain Sim")
+    parser = argparse.ArgumentParser(description="SaniCer Sanitary Ware Industries — Supply Chain Sim")
     parser.add_argument("--scenario", choices=list(SCENARIOS.keys()),
                         default=None, help="Run a single scenario (default: all)")
     parser.add_argument("--seed",     type=int, default=42,
@@ -177,9 +177,9 @@ def _print_insights(results: Dict[str, Tuple]) -> None:
 
     # Bottleneck
     insights.append(
-        "🔩  [bold]Kiln is the production bottleneck.[/bold]  "
-        "With 2 roller hearth kilns at 4 h/batch, theoretical max throughput is "
-        "12 batches/day (3 000 m²/day).  All upstream stages have spare capacity."
+        "🔩  [bold]Tunnel kiln is the production bottleneck.[/bold]  "
+        "With 1 tunnel kiln at 24 h/batch, theoretical max throughput is "
+        "1 batch/day (50 units/day).  All upstream stages have spare capacity."
     )
 
     # Fill rate
@@ -193,11 +193,11 @@ def _print_insights(results: Dict[str, Tuple]) -> None:
     # Supply disruption impact
     if "supply_disruption" in results:
         sd_kpis = results["supply_disruption"][1]
-        prod_loss = base_kpis["total_production_m2"] - sd_kpis["total_production_m2"]
+        prod_loss = base_kpis["total_production_units"] - sd_kpis["total_production_units"]
         rev_loss  = base_kpis["revenue_eur"]          - sd_kpis["revenue_eur"]
         insights.append(
             f"⚠️  [bold]35-day kaolin port strike[/bold] causes "
-            f"[red]{prod_loss:,.0f} m²[/red] production loss "
+            f"[red]{prod_loss:,.0f} units[/red] production loss "
             f"(€[red]{rev_loss:,.0f}[/red] revenue impact).  "
             "Consider dual-sourcing kaolin or holding 4-week safety stock."
         )
@@ -216,14 +216,14 @@ def _print_insights(results: Dict[str, Tuple]) -> None:
     # Optimised
     if "optimised" in results and "baseline" in results:
         opt_kpis  = results["optimised"][1]
-        prod_gain = opt_kpis["total_production_m2"] - base_kpis["total_production_m2"]
+        prod_gain = opt_kpis["total_production_units"] - base_kpis["total_production_units"]
         rev_gain  = opt_kpis["revenue_eur"]          - base_kpis["revenue_eur"]
         insights.append(
-            f"✅  [bold]Adding a 3rd kiln + 50 % safety-stock uplift[/bold] "
-            f"increases output by [green]{prod_gain:,.0f} m²[/green] "
+            f"✅  [bold]Adding a 2nd tunnel kiln + 50 % safety-stock uplift[/bold] "
+            f"increases output by [green]{prod_gain:,.0f} units[/green] "
             f"(+€[green]{rev_gain:,.0f}[/green]) over 90 days.  "
-            f"Kiln CAPEX ≈ €2.4 M — simple payback ≈ "
-            f"{2_400_000 / max(1, rev_gain / 90 * 365):.1f} years."
+            f"Kiln CAPEX ≈ €3.5 M — simple payback ≈ "
+            f"{3_500_000 / max(1, rev_gain / 90 * 365):.1f} years."
         )
 
     for ins in insights:
