@@ -1,0 +1,74 @@
+flowchart LR
+  %% CeraSim factory-wide production pipeline
+
+  subgraph Supply["Inbound Supply and Replenishment"]
+    Review[Supply monitor<br/>inventory review every 4h]
+    Check{Below reorder point?}
+    Supplier[Supplier delivery<br/>lead time + reliability delay]
+    RM[Raw-material inventory<br/>clay, kaolin, feldspar, silica, glaze]
+
+    Review --> Check
+    Check -- Yes --> Supplier
+    Check -- No --> Review
+    Supplier --> RM
+  end
+
+  subgraph Production["Production Pipeline"]
+    SlipPrep[1. Slip preparation<br/>mix body materials, mill, add water]
+    SlipBuffer[(Slip buffer)]
+    Casting[2. Pressure casting<br/>assign product and cast 50-unit batch]
+    CastStore[(Cast store)]
+    Drying[3. Demolding and drying<br/>extract from molds and air dry]
+    DemoldedStore[(Demolded store)]
+    Fettling[4. Fettling<br/>trim seams, smooth surfaces, create passages]
+    FettledStore[(Fettled store)]
+    Glazing[5. Spray glazing<br/>consume glaze and coat ware]
+    GlazedStore[(Glazed store)]
+    Kiln[6. Tunnel kiln firing<br/>24h cycle, bottleneck]
+    FiredStore[(Fired store)]
+    Finishing[7. Finishing and packaging<br/>grade, leak test, flush test]
+    FG[(Finished-goods warehouse)]
+
+    RM --> SlipPrep --> SlipBuffer --> Casting --> CastStore --> Drying --> DemoldedStore --> Fettling --> FettledStore
+    RM --> Glazing
+    FettledStore --> Glazing --> GlazedStore --> Kiln --> FiredStore --> Finishing
+  end
+
+  subgraph Quality["Quality Logic"]
+    Grade[Grade A / Grade B / Reject split]
+    Leak[Leak test]
+    Flush[Flush test]
+    Saleable{Pass both tests?}
+    Reject[Reject / scrap]
+
+    Finishing --> Grade --> Leak --> Flush --> Saleable
+    Saleable -- Yes --> FG
+    Saleable -- No --> Reject
+  end
+
+  subgraph Outbound["Demand and Order Fulfilment"]
+    Demand[Demand generator<br/>Poisson customer orders]
+    Orders[(Order queue)]
+    Fulfil[Order fulfilment workers]
+    Ship[Ship fulfilled quantity]
+    Stockout[Partial fulfilment<br/>or stockout event]
+
+    Demand --> Orders --> Fulfil
+    FG --> Fulfil
+    Fulfil --> Ship
+    Fulfil --> Stockout
+  end
+
+  subgraph Monitoring["Monitoring and KPIs"]
+    Daily[Daily recorder]
+    KPI[KPIs and reports<br/>output, utilization, WIP, revenue, fill rate]
+  end
+
+  Production -. stage counts, WIP, utilization .-> Daily
+  Supply -. deliveries, shortages .-> Daily
+  Outbound -. orders, fulfilment, stockouts .-> Daily
+  Daily --> KPI
+  Review -. replenishment trigger .-> Supplier
+
+  classDef bottleneck fill:#fbe9e7,stroke:#c62828,stroke-width:2px;
+  class Kiln bottleneck;
