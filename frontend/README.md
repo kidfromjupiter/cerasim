@@ -22,7 +22,7 @@ The app will open in your default browser at `http://localhost:8501`
 
 ## Features
 
-### 📊 Simulation Configuration
+### Simulation Configuration
 
 - **Scenario Selection**: Choose from 4 predefined scenarios:
   - **Baseline**: Normal operations with balanced supply & demand
@@ -34,7 +34,7 @@ The app will open in your default browser at `http://localhost:8501`
   - **Random Seed**: Set for reproducible results (default: 42)
   - **Chart Generation**: Toggle visualization generation on/off
 
-### 📈 Output Metrics
+### Output Metrics
 
 #### Summary Tab
 - All key KPIs in a single table
@@ -60,7 +60,7 @@ The app will open in your default browser at `http://localhost:8501`
 - Supplier lead times and on-time delivery rates
 - Disruption analysis
 
-### 📉 Visualizations
+### Visualizations
 
 - **Production Pie Chart**: Sales mix by product
 - **Cost Breakdown Bar Chart**: Cost distribution across categories
@@ -73,7 +73,7 @@ The app will open in your default browser at `http://localhost:8501`
    - Toggle chart generation if desired
 
 2. **Run Simulation**:
-   - Click the **▶️ Run Simulation** button
+   - Click the **Run Simulation** button
    - Wait for the progress bar to reach 100%
 
 3. **Analyze Results**:

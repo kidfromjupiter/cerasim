@@ -57,7 +57,7 @@ for key, default_value in SESSION_DEFAULTS.items():
 # Header
 # ─────────────────────────────────────────────────────────────────────────────
 
-st.title("🏭 CeraSim — Supply Chain Simulator")
+st.title("CeraSim — Supply Chain Simulator")
 st.markdown("**SaniCer Sanitary Ware Industries** | 90-day discrete-event simulation")
 st.divider()
 
@@ -67,7 +67,7 @@ st.divider()
 # ─────────────────────────────────────────────────────────────────────────────
 
 with st.sidebar:
-    st.header("⚙️ Simulation Configuration")
+    st.header("Simulation Configuration")
 
     # Scenario selection
     scenario_names = list(SCENARIOS.keys())
@@ -82,10 +82,10 @@ with st.sidebar:
 
     # Scenario description
     scenario_desc = SCENARIOS[selected_scenario]["description"]
-    st.info(scenario_desc, icon="ℹ️")
+    st.info(scenario_desc, icon=None)
 
     # Advanced options
-    with st.expander("🔧 Advanced Options"):
+    with st.expander("Advanced Options"):
         seed = st.number_input("Random Seed", value=42, min_value=0, max_value=10000)
         generate_charts = st.checkbox("Generate charts", value=True)
     
@@ -93,7 +93,7 @@ with st.sidebar:
 
     # Run button
     run_button = st.button(
-        "▶️ Run Simulation",
+        "Run Simulation",
         use_container_width=True,
         type="primary",
     )
@@ -104,7 +104,7 @@ with st.sidebar:
 # ─────────────────────────────────────────────────────────────────────────────
 
 if run_button:
-    with st.spinner("🔄 Running simulation..."):
+    with st.spinner("Running simulation..."):
         try:
             start_time = time.time()
             factory, kpis = run_simulation(selected_scenario, seed=seed)
@@ -117,10 +117,10 @@ if run_button:
                 "seed": seed,
                 "elapsed": elapsed,
             }
-            st.success(f"✅ Simulation completed in {elapsed:.2f} seconds")
+            st.success(f"Simulation completed in {elapsed:.2f} seconds")
 
         except Exception as e:
-            st.error(f"❌ Simulation failed: {str(e)}")
+            st.error(f"Simulation failed: {str(e)}")
             st.exception(e)
 
 
@@ -134,7 +134,7 @@ if st.session_state.sim_results:
     scenario = results["scenario"]
 
     # Results header
-    st.subheader(f"📊 Results — {SCENARIOS[scenario]['label']}")
+    st.subheader(f"Results — {SCENARIOS[scenario]['label']}")
     st.caption(f"Seed: {results['seed']} | Computed in {results['elapsed']:.2f}s")
     st.divider()
 
@@ -165,6 +165,6 @@ if st.session_state.sim_results:
 
 else:
     st.info(
-        "👈 Configure the simulation in the sidebar and click **Run Simulation** to begin.",
-        icon="ℹ️",
+        "Configure the simulation in the sidebar and click Run Simulation to begin.",
+        icon=None,
     )

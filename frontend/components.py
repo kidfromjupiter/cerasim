@@ -27,28 +27,28 @@ def display_top_metrics(kpis: dict) -> None:
 
     with col1:
         st.metric(
-            "📦 Total Production",
+            "Total Production",
             f"{kpis.get('total_production_units', 0):.0f} units",
             f"{kpis.get('avg_daily_m2', 0):.1f} units/day",
         )
 
     with col2:
         st.metric(
-            "📋 Orders Fulfilled",
+            "Orders Fulfilled",
             f"{kpis.get('fill_rate_pct', 0):.1f}%",
             f"{kpis.get('total_fulfilled_m2', 0):.0f} / {kpis.get('total_ordered_m2', 0):.0f} units",
         )
 
     with col3:
         st.metric(
-            "💰 Net Profit",
+            "Net Profit",
             format_currency(kpis.get("net_profit_eur", 0)),
             f"{kpis.get('net_margin_pct', 0):.1f}% margin",
         )
 
     with col4:
         st.metric(
-            "⏱️ Avg Cycle Time",
+            "Avg Cycle Time",
             f"{kpis.get('avg_cycle_time_hr', 0):.1f} hours",
             f"{kpis.get('avg_cycle_time_hr', 0) / 24:.1f} days",
         )

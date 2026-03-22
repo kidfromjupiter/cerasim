@@ -11,7 +11,7 @@ from cerasim.config import SCENARIOS, SIM_DAYS, HOURS_PER_DAY
 # Streamlit page configuration
 PAGE_CONFIG = {
     "page_title": "CeraSim — Supply Chain Simulator",
-    "page_icon": "🏭",
+    "page_icon": "factory",
     "layout": "wide",
     "initial_sidebar_state": "expanded",
 }
@@ -25,7 +25,7 @@ STREAMLIT_CSS = """
 """
 
 # Tab configuration
-TABS = ["📈 Summary", "🏭 Production", "📦 Orders", "💸 Financial", "⚙️ Machines"]
+TABS = ["Summary", "Production", "Orders", "Financial", "Machines"]
 
 # Session state defaults
 SESSION_DEFAULTS = {
